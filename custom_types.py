@@ -1,0 +1,1 @@
+Vec2 = tuple[int | float, int | float]
