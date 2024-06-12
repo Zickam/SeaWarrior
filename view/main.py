@@ -1,6 +1,8 @@
+import enums
+
 import model
 from custom_types import *
-import enums
+from presenter.main import Presenter
 
 class Window:
     def __init__(self, game: model.main.Game, resolution: Vec2, position: Vec2 = None):
@@ -28,10 +30,21 @@ class Button:
     def onClick(self):
         self.__action()
 
-class MainMenu:
-    def __init__(self, controller):
+class MainMenuView:
+    def __init__(self, presenter):
         self.button_start = Button(
             (0, 0),
             (100, 200),
             # lambda controller.
         )
+
+
+class GameplayView:
+    def __init__(self):
+        ...
+
+
+class View:
+    def __init__(self, presenter: Presenter):
+        self.__main_menu_view = MainMenuView(presenter)
+        self.__gameplay_view = GameplayView(presenter)
