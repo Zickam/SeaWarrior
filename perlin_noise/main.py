@@ -150,13 +150,7 @@ if __name__ == "__main__":
     #
     # # Done! Time to quit.
     # pg.quit()
-
-
     import cv2
-
-    img = cv2.imread("123.jpg")
-    cv2.imshow("negr", img)
-    exit()
 
     perlin = Perlin2D(1)
     i = 0
