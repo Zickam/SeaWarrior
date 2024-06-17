@@ -1,5 +1,8 @@
+from __future__ import annotations
 import random
 import math
+from types import FunctionType
+from enum import Enum
 
 import numpy as np
 # import numba
@@ -9,6 +12,10 @@ Vec2 = tuple[float | int, float | int]
 
 
 class Perlin2D:
+    class Normalization(Enum):
+        normalization_1 = 1
+        normalization_2 = 2
+
     GRADIENT_VECTORS = (
         (1, 0),
         (-1, 0),
@@ -89,7 +96,7 @@ class Perlin2D:
 
         return tb
 
-    def getPerlin(self, point: Vec2, octaves: int, persistence: float = 0.5) -> float:
+    def getPerlinAt(self, point: Vec2, octaves: int, persistence: float = 0.5) -> float:
         tmp_point = [point[0], point[1]]
         amplitude = 1
         max_val = 0
@@ -106,116 +113,72 @@ class Perlin2D:
 
         return result / max_val
 
+    def __normalization1(self, x: float) -> float:
+        return int(255 * abs(x))
 
+    def __normalization2(self, x: float, min_val: float, max_val: float) -> float:
+        offset = -min_val
+        return (x + offset) / (max_val + offset)
+
+    def __getMaxAndMinValues(self, perlin: list[list[float]]) -> tuple[float, float]:
+        min_perlin = 10 ** 10
+        max_perlin = -10 ** 10
+
+        for i in perlin:
+            for j in i:
+                if j > max_perlin:
+                    max_perlin = j
+                if j < min_perlin:
+                    min_perlin = j
+
+        return max_perlin, min_perlin
+
+    def __normalizePerlin(self, perlin: list[list[float]], normalization_func_enum: Perlin2D.Normalization.__dict__):
+        match normalization_func_enum:
+            case Perlin2D.Normalization.normalization_1:
+                ...
+            case Perlin2D.Normalization.normalization_2:
+                max_val, min_val = self.__getMaxAndMinValues(perlin)
+
+        for i in range(len(perlin)):
+            for j in range(len(perlin[i])):
+                match normalization_func_enum:
+                    case Perlin2D.Normalization.normalization_1:
+                        color = self.__normalization1(perlin[i][j])
+                    case Perlin2D.Normalization.normalization_2:
+                        color = self.__normalization2(perlin[i][j], min_val, max_val)
+                perlin[i][j] = (color, 0, 0)
+
+    def getPerlin(self, width: int, height: int, step: float, octaves: int, normalization_func_enum: Perlin2D.Normalization.__dict__) -> list[list[float]]:
+        """Returns a matrix consisting of """
+        if not (normalization_func_enum in Perlin2D.Normalization):
+            raise Exception(f"Undefined normalization function: {normalization_func_enum}")
+
+        perlin_values = []
+        i = 0
+        while i < width:
+            j = 0
+            perlin_values.append([])
+            while j < height:
+                point_perlin = self.getPerlinAt((i / width, j / height), 1)
+                perlin_values[-1].append(point_perlin)
+
+                j += step
+            i += step
+
+        self.__normalizePerlin(perlin_values, normalization_func_enum)
+
+        return perlin_values
 
 if __name__ == "__main__":
-    # import pygame as pg
-    #
-    # pg.init()
-    #
-    # perlin = Perlin2D()
-    #
-    # # Set up the drawing window
-    # screen = pg.display.set_mode([500, 500])
-    # clock = pg.time.Clock()
-    # # Run until the user asks to quit
-    # running = True
-    # while running:
-    #
-    #     # Did the user click the window close button?
-    #     for event in pg.event.get():
-    #         if event.type == pg.QUIT:
-    #             running = False
-    #
-    #     # Fill the background with white
-    #     screen.fill((255, 255, 255))
-    #
-    #     # Draw a solid blue circle in the center
-    #     step = 0.1
-    #     i = 0
-    #
-    #     while i < 16:
-    #         j = 0
-    #         while j < 16:
-    #             point_perlin = perlin.getPerlin((i, j), 4)
-    #             # print(point_perlin)
-    #             color = int(256 * abs(point_perlin))
-    #             print(color)
-    #             pg.draw.rect(screen, (color, color, color), (int(i * 10), int(j * 10), int(i) + 1, int(j) + 1), 1)
-    #             j += step
-    #         i += step
-    #
-    #     # Flip the display
-    #     pg.display.flip()
-    #     clock.tick(1)
-    #
-    # # Done! Time to quit.
-    # pg.quit()
-
-    # import cv2
-    # import numpy as np
-    #
-    #
-    # def draw_circle(event, x, y, flags, param):
-    #     if event == cv2.EVENT_LBUTTONDOWN:
-    #         cv2.circle(img, (x, y), 100, (255, 0, 0), -1)
-    #         cv2.imshow('my_drawing', img)
-    #         cv2.waitKey(0)
-    #
-    #
-    # cv2.namedWindow(winname='my_drawing')
-    # cv2.setMouseCallback('my_drawing', draw_circle)
-    # img = np.zeros(shape=(512, 512, 3), dtype=np.uint8)
-    # while True:
-    #     cv2.imshow('my_drawing', img)
-    #     if cv2.waitKey(0) == 27:
-    #         break
-    #
-    # cv2.destroyAllWindows()
-
-    import cv2
     import matplotlib.pyplot as plt
 
     perlin = Perlin2D(1)
-    i = 0
-    step = 0.1
-    perlin_values = []
-    min_perlin = 10 ** 10
-    max_perlin = -10 ** 10
 
-    while i < 128:
-        j = 0
-        perlin_values.append([])
-        while j < 128:
-            point_perlin = perlin.getPerlin((i / 128, j / 128), 1)
-            # print(point_perlin)
-            perlin_values[-1].append(point_perlin)
-            if min_perlin > point_perlin:
-                min_perlin = point_perlin
-
-            if max_perlin < point_perlin:
-                max_perlin = point_perlin
-
-            j += step
-        i += step
-
-    offset = -min_perlin
-    normalization = lambda x: (x + offset) / (max_perlin + offset)
-    # normalization = lambda x: int(255 * abs(x))
-    img = []
-    for i in range(len(perlin_values)):
-        img.append([])
-        for j in perlin_values[i]:
-            color = normalization(j)
-            img[-1].append([color, 0, 0])
-            # print(color)
-    # for i in range(160):
-    #     for j in range(160):
-    #         img[i, j] = (255, 0, 0)
-    # cv2.circle(img, (0, 0), 100, (255, 0, 0), -1)
+    values = perlin.getPerlin(256, 256, 1, 1, Perlin2D.Normalization.normalization_2)
     plt.title("Perlin Noise")
     plt.xlabel("Time")
     plt.ylabel("Value")
-    plt.imshow(img)
+    plt.imshow(values)
+    plt.subplot()
     plt.show()
-    print("show")
