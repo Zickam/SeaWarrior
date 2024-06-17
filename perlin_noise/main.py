@@ -2,7 +2,7 @@ import random
 import math
 
 import numpy as np
-import numba
+# import numba
 
 # from custom_types import *
 Vec2 = tuple[float | int, float | int]
@@ -107,6 +107,7 @@ class Perlin2D:
         return result / max_val
 
 
+
 if __name__ == "__main__":
     # import pygame as pg
     #
@@ -150,25 +151,71 @@ if __name__ == "__main__":
     #
     # # Done! Time to quit.
     # pg.quit()
+
+    # import cv2
+    # import numpy as np
+    #
+    #
+    # def draw_circle(event, x, y, flags, param):
+    #     if event == cv2.EVENT_LBUTTONDOWN:
+    #         cv2.circle(img, (x, y), 100, (255, 0, 0), -1)
+    #         cv2.imshow('my_drawing', img)
+    #         cv2.waitKey(0)
+    #
+    #
+    # cv2.namedWindow(winname='my_drawing')
+    # cv2.setMouseCallback('my_drawing', draw_circle)
+    # img = np.zeros(shape=(512, 512, 3), dtype=np.uint8)
+    # while True:
+    #     cv2.imshow('my_drawing', img)
+    #     if cv2.waitKey(0) == 27:
+    #         break
+    #
+    # cv2.destroyAllWindows()
+
     import cv2
+    import matplotlib.pyplot as plt
 
     perlin = Perlin2D(1)
     i = 0
     step = 0.1
-    img = np.full((160, 160, 3), 0)
-    while i < 16:
-        j = 0
-        while j < 16:
-            point_perlin = perlin.getPerlin((i, j), 4)
-            color = int(256 * abs(point_perlin))
-            # print(color)
-            if color > 255 or color < 0:
-                print("shit")
-                break
+    perlin_values = []
+    min_perlin = 10 ** 10
+    max_perlin = -10 ** 10
 
-            img[int(i), int(j)] = (color, color, color)
+    while i < 128:
+        j = 0
+        perlin_values.append([])
+        while j < 128:
+            point_perlin = perlin.getPerlin((i / 128, j / 128), 1)
+            # print(point_perlin)
+            perlin_values[-1].append(point_perlin)
+            if min_perlin > point_perlin:
+                min_perlin = point_perlin
+
+            if max_perlin < point_perlin:
+                max_perlin = point_perlin
+
             j += step
         i += step
-    print(img)
-    img = img.astype(np.uint8)
-    cv2.imshow("pohuy", img)
+
+    offset = -min_perlin
+    normalization = lambda x: (x + offset) / (max_perlin + offset)
+    # normalization = lambda x: int(255 * abs(x))
+    img = []
+    for i in range(len(perlin_values)):
+        img.append([])
+        for j in perlin_values[i]:
+            color = normalization(j)
+            img[-1].append([color, 0, 0])
+            # print(color)
+    # for i in range(160):
+    #     for j in range(160):
+    #         img[i, j] = (255, 0, 0)
+    # cv2.circle(img, (0, 0), 100, (255, 0, 0), -1)
+    plt.title("Perlin Noise")
+    plt.xlabel("Time")
+    plt.ylabel("Value")
+    plt.imshow(img)
+    plt.show()
+    print("show")
