@@ -1,4 +1,5 @@
-from types import FunctionType
+from typing import Callable
+from typing import NamedTuple
 
 from custom_types import *
 from view.constants import *
@@ -6,20 +7,15 @@ from view.constants import *
 import pygame as pg
 pg.font.init()
 
-class MouseState:
-    def __init__(self, is_clicked: bool, mouse_pos: Vec2):
-        self.__is_clicked = is_clicked
-        self.__mouse_pos = mouse_pos
-
-
-
+def raiseException(ex: Exception):
+    raise ex
 
 class Button:
     def __init__(self, position: Vec2, size: Vec2, text: str = "Plain text"):
         self.__size = size
         self.__position = position[0] - size[0] // 2, position[1] - size[1] // 2
         self.__text = text
-        self.__action: FunctionType
+        self.__action: Callable 
 
         self.__top_left_point = self.__position[0], self.__position[1]
         self.__bottom_right_point = self.__position[0] + self.__size[0], self.__position[1] + self.__size[1]
@@ -34,22 +30,25 @@ class Button:
             return True
         return False
 
-    def setActionOnClick(self, action: FunctionType):
-        if not isinstance(action, FunctionType):
+    def setActionOnClick(self, action: Callable):
+        if not isinstance(action, Callable):
             raise Exception(f"action should be FunctionType type. Actual type is {type(action)}")
         self.__action = action
 
     def onClick(self):
         try:
             self.__action()
-        except Exception as ex:
+        except AttributeError as ex:
             raise Exception(f"Action wasn't set before the actual call. {ex}")
+        except Exception as ex:
+            raise ex
 
-    def isClicked(self):
-        ...
 
-    def update(self, screen: pg.display, ):
+    def update(self, screen: pg.display, mouse_state: MouseState):
         pg.draw.rect(screen, Colors.white, self.__rect)
         screen.blit(self.__text_box, self.__position)
 
-        d
+        if mouse_state.is_clicked_left and self.isMouseInBoundaries(mouse_state.position):
+            self.onClick()
+
+

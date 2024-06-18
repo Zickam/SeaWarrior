@@ -9,5 +9,5 @@ class MainMenu(Enum):
     saves_btn = Button((SCREEN_RESOLUTION[0] // 2, SCREEN_RESOLUTION[1] // 2), BTN_SIZE, "SAVES")
     exit_btn = Button((SCREEN_RESOLUTION[0] // 2, SCREEN_RESOLUTION[1] // 2 + 40), BTN_SIZE, "QUIT")
 
-
-
+class GameplayGUI(Enum):
+    pause = Button((0, 0), BTN_SIZE, "PAUSE")

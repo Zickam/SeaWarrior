@@ -48,21 +48,30 @@ class Model:
         self.__player = Ship((0, 0), 100)
         self.__enemies: set[Ship] = set()
 
+        self.__is_pause = False
+
+    def isPause(self) -> bool:
+        return self.__is_pause
+
+    def setIsPause(self, is_pause: bool):
+        self.__is_pause = is_pause
+
     def getPlayer(self) -> Ship:
         return self.__player
 
-    def postInit(self, seed: int):
-        ...
 
     def getGameState(self) -> enums.GameState.__dict__:
         return self.__state
+
+    def setGameState(self, game_state: enums.GameState):
+        self.__state = game_state
 
     @staticmethod
     def restartGame(self) -> Model:
         return Model()
 
-    def gameplayStart(self):
+    def initPlayer(self):
         self.__player = Ship((0, 0), constants.PLAYER_BASE_HP)
 
-    def handleDeath(self):
-        self.__state = enums.GameState.death_screen
+    def initMap(self):
+        ...

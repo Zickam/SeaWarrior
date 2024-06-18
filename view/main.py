@@ -17,26 +17,35 @@ class MainMenuView:
         self.__presenter = presenter
         self.__buttons = view.ui_arrangement.MainMenu
 
+        self.__buttons.start_btn.value.setActionOnClick(self.__presenter.startGameplay)
+        self.__buttons.saves_btn.value.setActionOnClick(self.__presenter.openSavesMenu)
+        self.__buttons.exit_btn.value.setActionOnClick(exit)
+
     def update(self):
         self.__screen.fill(Colors.water_shadowed)
-        for btn in self.__buttons:
-            btn.value.update(self.__screen)
+        mouse_pressed = pg.mouse.get_pressed()
+        mouse_state = MouseState(is_clicked_left=mouse_pressed[0], is_clicked_right=mouse_pressed[2], position=pg.mouse.get_pos())
 
-    def handleGUIEvents(self):
-        ...
+        for btn in self.__buttons:
+            btn.value.update(self.__screen, mouse_state)
+
 
 
 class GameplayView:
     def __init__(self, screen: pg.display, presenter: Presenter):
         self.__screen = screen
         self.__presenter = presenter
+        self.__buttons = view.ui_arrangement.GameplayGUI
+
+        self.__buttons.pause.value.setActionOnClick(self.__presenter.togglePause)
 
     def update(self):
         self.__screen.fill(Colors.water)
 
-    def handleGUIEvents(self):
-        ...
 
+class SavesMenuView:
+    def __init__(self, screen: pg.display, ):
+        ...
 
 
 class View:
@@ -49,16 +58,18 @@ class View:
 
         self.__main_menu_view = MainMenuView(self.__screen, presenter)
         self.__gameplay_view = GameplayView(self.__screen, presenter)
+        # self.__saves_menu_view = SavesMenuView(self.__screen, presenter)
 
 
     def update(self):
         match self.__model.getGameState():
-            case enums.GameState.main_menu:
+            case GameState.main_menu:
                 self.__main_menu_view.update()
-                self.__main_menu_view.handleGUIEvents()
-            case enums.GameState.gameplay:
+            case GameState.saves_menu:
+                self.__saves_menu_view.update()
+                # self.__saves_menu_view.()
+            case GameState.gameplay:
                 self.__gameplay_view.update()
-                self.__gameplay_view.handleGUIEvents()
 
         pg.display.flip()
         self.__clock.tick(FPS_CAP)
