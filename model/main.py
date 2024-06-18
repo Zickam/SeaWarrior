@@ -1,63 +1,28 @@
-import model
-import view.main
-
-
-class PlayerInput:
-    def __init__(self):
-        ...
-
-class Bot:
-    def __init__(self):
-        ...
-
-class MainMenuController:
-    def __init__(self, model: model.main.Game, main_menu_view: view.main.MainMenu):
-        self.__model = model
-        self.__main_menu_view = main_menu_view
-
-    # def handleButtons(self):
-    #     if self.__main_menu_view
-
-class SavesMenuController:
-    def __init__(self):
-        ...
-
-class GameplayController:
-    def __init__(self):
-        ...
-
-class DeathScreenController:
-    def __init__(self):
-        ...
-
-
 from __future__ import annotations
-
-import controller.main
 
 from custom_types import *
 import constants
 import generator
 import enums
 
+import model
+import view.main
 
 class Ship:
-    def __init__(self, coordinates: Vec2, controller: controller.main.Bot | controller.main.Input, hp: float | int):
-        self.__coordinates = coordinates
-        self.__controller = controller
-        self.__hp = hp
+    def __init__(self, coordinates: Vec2, hp: float):
+        self._coordinates = coordinates
+        self._hp = hp
+
+    def changeCoordinatesBy(self, by: Vec2):
+        self._coordinates[0] += by[0]
+        self._coordinates[1] += by[1]
+
+    def changeHPBy(self, by: float):
+        self._hp += by
 
     def getHP(self) -> float | int:
-        return self.__hp
+        return self._hp
 
-    def decreaseHP(self, by: float | int):
-        self.__hp -= by
-
-    def increaseHP(self, by: float | int):
-        self.__hp += by
-
-    def __hash__(self) -> int:
-        return id(self)
 
 class Chunk:
     def __init__(self):
@@ -79,24 +44,25 @@ class Map:
         ...
 
 
-class Game:
+class Model:
     def __init__(self):
-        self.__state = enums.GameState.main_menu
+        self._state = enums.GameState.main_menu
 
-    def postInit(self, seed: int):
         self.__enemies: set[Ship] = set()
         self.__map = Map(seed)
 
-    def getState(self) -> enums.GameState.__dict__:
+    def postInit(self, seed: int):
+        ...
+
+    def getGameState(self) -> enums.GameState.__dict__:
         return self.__state
 
     @staticmethod
-    def restartGame(self) -> Game:
-        return Game()
+    def restartGame(self) -> Model:
+        return Model()
 
     def gameplayStart(self):
         self.__player = Ship((0, 0), controller.main.Input(), constants.player_basehp)
 
     def handleDeath(self):
         self.__state = enums.GameState.death_screen
-

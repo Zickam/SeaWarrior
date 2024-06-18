@@ -8,4 +8,4 @@ class GameState(Enum):
 
 class BlockType(Enum):
     water = 0
-    sand = 1
+    island = 1
