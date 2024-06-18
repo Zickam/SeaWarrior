@@ -1,4 +1,4 @@
-player_base_hp = 100
+PLAYER_BASE_HP = 100
 player_base_damage = 25
 player_increment_damage = 5
 

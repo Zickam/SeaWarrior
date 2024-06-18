@@ -1,12 +1,9 @@
 from __future__ import annotations
 
 from custom_types import *
-import constants
-import generator
+from model import constants
 import enums
 
-import model
-import view.main
 
 class Ship:
     def __init__(self, coordinates: Vec2, hp: float):
@@ -46,10 +43,13 @@ class Map:
 
 class Model:
     def __init__(self):
-        self._state = enums.GameState.main_menu
+        self.__state = enums.GameState.main_menu
 
+        self.__player = Ship((0, 0), 100)
         self.__enemies: set[Ship] = set()
-        self.__map = Map(seed)
+
+    def getPlayer(self) -> Ship:
+        return self.__player
 
     def postInit(self, seed: int):
         ...
@@ -62,7 +62,7 @@ class Model:
         return Model()
 
     def gameplayStart(self):
-        self.__player = Ship((0, 0), controller.main.Input(), constants.player_basehp)
+        self.__player = Ship((0, 0), constants.PLAYER_BASE_HP)
 
     def handleDeath(self):
         self.__state = enums.GameState.death_screen
