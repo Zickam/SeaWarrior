@@ -1,3 +1,5 @@
+import os
+
 from model.models import Model
 from presenter.main import Presenter
 from view.main import View
@@ -14,4 +16,6 @@ def main():
         presenter.handleEvents()
 
 if __name__ == "__main__":
+    current_dir = os.getcwd()
+    print(current_dir)
     main()

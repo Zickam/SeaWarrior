@@ -1,7 +1,7 @@
 import pygame as pg
 
-from src.enums import *
-from src.model.models import Model
+from custom_enums import *
+from model.models import Model
 
 
 class ConfigManager:

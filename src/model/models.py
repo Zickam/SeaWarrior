@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from src.custom_types import *
-from src.model import constants
-from src import enums
-
+from custom_types import *
+from model import constants
+import custom_enums
 
 class Ship:
     def __init__(self, coordinates: Vec2, hp: float):
@@ -43,7 +42,7 @@ class Map:
 
 class Model:
     def __init__(self):
-        self.__state = enums.GameState.main_menu
+        self.__state = custom_enums.GameState.main_menu
 
         self.__player = Ship((0, 0), 100)
         self.__enemies: set[Ship] = set()
@@ -60,10 +59,10 @@ class Model:
         return self.__player
 
 
-    def getGameState(self) -> enums.GameState.__dict__:
+    def getGameState(self) -> custom_enums.GameState.__dict__:
         return self.__state
 
-    def setGameState(self, game_state: enums.GameState):
+    def setGameState(self, game_state: custom_enums.GameState):
         self.__state = game_state
 
     @staticmethod

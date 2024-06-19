@@ -1,9 +1,9 @@
-import src.view.ui_arrangement
-from src.custom_types import *
-from src.presenter.main import Presenter
-from src.model.models import Model
-from src.enums import GameState
-from src.view.constants import *
+import view.ui_arrangement
+from custom_types import *
+from presenter.main import Presenter
+from model.models import Model
+from custom_enums import GameState
+from view.constants import *
 
 import pygame as pg
 pg.init()
@@ -13,7 +13,7 @@ class MainMenuView:
     def __init__(self, screen: pg.display, presenter: Presenter):
         self.__screen = screen
         self.__presenter = presenter
-        self.__buttons = src.view.ui_arrangement.MainMenu
+        self.__buttons = view.ui_arrangement.MainMenu
 
         self.__buttons.start_btn.value.setActionOnClick(self.__presenter.startGameplay)
         self.__buttons.saves_btn.value.setActionOnClick(self.__presenter.openSavesMenu)
@@ -33,7 +33,7 @@ class GameplayView:
     def __init__(self, screen: pg.display, presenter: Presenter):
         self.__screen = screen
         self.__presenter = presenter
-        self.__buttons = src.view.ui_arrangement.GameplayGUI
+        self.__buttons = view.ui_arrangement.GameplayGUI
 
         self.__buttons.pause.value.setActionOnClick(self.__presenter.togglePause)
 
@@ -46,7 +46,7 @@ class SavesMenuView:
         self.__screen = screen
         self.__presenter = presenter
 
-        self.__buttons = src.view.ui_arrangement.SavesMenu
+        self.__buttons = view.ui_arrangement.SavesMenu
         self.__buttons.main_menu.value.setActionOnClick(lambda x: presenter.openMainMenu)
         # self.__buttons.load_save.value.setActionOnClick(self.__presenter.)
 
