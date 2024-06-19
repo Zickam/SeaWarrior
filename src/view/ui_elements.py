@@ -1,3 +1,4 @@
+import time
 from typing import Callable
 
 from custom_types import *
@@ -6,22 +7,29 @@ from view.constants import *
 import pygame as pg
 pg.font.init()
 
-def raiseException(ex: Exception):
-    raise ex
 
 class Button:
-    def __init__(self, position: Vec2, size: Vec2, text: str = "Plain text"):
-        self.__size = size
-        self.__position = position[0] - size[0] // 2, position[1] - size[1] // 2
+    CLICK_INTERVAL = 0.1
+    def __init__(self, position: Vec2, size: Vec2 = None, text: str = "Plain text"):
+        # if size is None, then calculate size depending on text size
         self.__text = text
-        self.__action: Callable 
+        self.__font = pg.font.SysFont("Comic Sans MS", 20)
+        self.__text_box = self.__font.render(self.__text, True, Colors.black)
+
+        if size is None:
+            self.__size = self.__text_box.get_size()
+        else:
+            self.__size = size
+
+        self.__position = position[0] - self.__size[0] // 2, position[1] - self.__size[1] // 2
+        self.__text = text
 
         self.__top_left_point = self.__position[0], self.__position[1]
         self.__bottom_right_point = self.__position[0] + self.__size[0], self.__position[1] + self.__size[1]
 
         self.__rect = pg.Rect((self.__top_left_point[0], self.__top_left_point[1]), (self.__size[0], self.__size[1]))
-        self.__font = pg.font.SysFont("Comic Sans MS", 20 )
-        self.__text_box = self.__font.render(self.__text, True, Colors.black)
+
+        self.__action: Callable
 
     def isMouseInBoundaries(self, mouse_pos: Vec2) -> bool:
         if self.__top_left_point[0] <= mouse_pos[0] <= self.__bottom_right_point[0] and \
@@ -47,7 +55,8 @@ class Button:
         pg.draw.rect(screen, Colors.white, self.__rect)
         screen.blit(self.__text_box, self.__position)
 
-        if mouse_state.is_clicked_left and self.isMouseInBoundaries(mouse_state.position):
+        if mouse_state.is_clicked_left and \
+                self.isMouseInBoundaries(mouse_state.position) and \
+                mouse_state.last_left_click_time + self.CLICK_INTERVAL <= time.monotonic():
+            mouse_state.last_left_click_time = time.monotonic()
             self.onClick()
-
-
