@@ -14,8 +14,9 @@ Vec2 = tuple[float | int, float | int]
 
 class Perlin2D:
     class Normalization(Enum):
-        normalization_1 = 1
-        normalization_2 = 2
+        simple = 1
+        custom = 2
+        no = 3
 
     GRADIENT_VECTORS = (
         (1, 0),
@@ -114,10 +115,10 @@ class Perlin2D:
 
         return result / max_val
 
-    def __normalization1(self, x: float) -> float:
+    def __normalizationSimple(self, x: float) -> float:
         return int(255 * abs(x))
 
-    def __normalization2(self, x: float, min_val: float, max_val: float) -> float:
+    def __normalizationCustom(self, x: float, min_val: float, max_val: float) -> float:
         offset = -min_val
         if max_val + offset == 0:
             return 0
@@ -138,21 +139,23 @@ class Perlin2D:
 
     def __normalizePerlin(self, perlin: list[list[float]], normalization_func_enum: Perlin2D.Normalization.__dict__):
         match normalization_func_enum:
-            case Perlin2D.Normalization.normalization_1:
+            case Perlin2D.Normalization.simple:
                 ...
-            case Perlin2D.Normalization.normalization_2:
+            case Perlin2D.Normalization.custom:
                 max_val, min_val = self.__getMaxAndMinValues(perlin)
 
         for i in range(len(perlin)):
             for j in range(len(perlin[i])):
                 match normalization_func_enum:
-                    case Perlin2D.Normalization.normalization_1:
-                        color = self.__normalization1(perlin[i][j])
-                    case Perlin2D.Normalization.normalization_2:
-                        color = self.__normalization2(perlin[i][j], min_val, max_val)
+                    case Perlin2D.Normalization.simple:
+                        color = self.__normalizationSimple(perlin[i][j])
+                    case Perlin2D.Normalization.custom:
+                        color = self.__normalizationCustom(perlin[i][j], min_val, max_val)
+                    case Perlin2D.Normalization.no:
+                        color = perlin[i][j]
                 perlin[i][j] = (color, color, color)
 
-    def getPerlin(self, resolution: Vec2, offset: Vec2, step: float, octaves: int, normalization_func_enum: Perlin2D.Normalization.__dict__) -> list[list[float]]:
+    def getPerlin(self, resolution: Vec2, chunk_pos: Vec2, step: float, normalization_func_enum: Perlin2D.Normalization, octaves: int = 1) -> list[list[float]]:
         """Returns a matrix consisting of """
         if not (normalization_func_enum in Perlin2D.Normalization):
             raise Exception(f"Undefined normalization function: {normalization_func_enum}")
@@ -163,8 +166,7 @@ class Perlin2D:
             j = 0
             perlin_values.append([])
             while j < resolution[1]:
-                point = ((i + offset[0]) / resolution[0], (j + offset[1]) / resolution[1])
-                # print(point)
+                point = (i / resolution[0] + chunk_pos[0], j / resolution[1] + chunk_pos[1])
                 point_perlin = self.getPerlinAt(point, octaves)
 
                 perlin_values[-1].append(point_perlin)
@@ -180,25 +182,46 @@ class Perlin2D:
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
-    perlin = Perlin2D(9)
+    # perlin = Perlin2D(9)
+    #
+    # img = [[[0, 0, 0] for i in range(64)] for j in range(64)]
+    # offsets = [
+    #     (0, 0),
+    #     (32, 0),
+    #     (0, 32),
+    #     (32, 32)
+    # ]
+    # for offset in offsets:
+    #     p = perlin.getPerlin((32, 32), offset, 1, 1, Perlin2D.Normalization.normalization_1)
+    #
+    #     p_i = 0
+    #     for i in range(offset[0], offset[0] + 32):
+    #         p_j = 0
+    #         for j in range(offset[1], offset[1] + 32):
+    #             img[i][j] = p[p_i][p_j]
+    #             # print(p[p_i][p_j])
+    #             p_j += 1
+    #         p_i += 1
+    # plt.imshow(img)
+    # plt.show()O
 
-    img = [[[0, 0, 0] for i in range(64)] for j in range(64)]
-    offsets = [
-        (0, 0),
-        (32, 0),
-        (0, 32),
-        (32, 32)
-    ]
-    for offset in offsets:
-        p = perlin.getPerlin((32, 32), offset, 1, 1, Perlin2D.Normalization.normalization_1)
+    perlin = Perlin2D(1)
 
-        p_i = 0
-        for i in range(offset[0], offset[0] + 32):
-            p_j = 0
-            for j in range(offset[1], offset[1] + 32):
-                img[i][j] = p[p_i][p_j]
-                # print(p[p_i][p_j])
-                p_j += 1
-            p_i += 1
-    plt.imshow(img)
+    initial_map_size = 2, 2
+    chunk_resolution = 8, 8
+    perlin_step = 1
+
+    data = perlin.getPerlin(chunk_resolution, (0, 4.5), perlin_step,  Perlin2D.Normalization.no)
+    with open("data.txt", "w") as file:
+        for row in data:
+            row_str = ""
+            for i in row:
+                row_str += f"{i[0]}, "
+            file.write(row_str)
+            file.write("\n")
+
+    print(*data, sep="\n")
+
+    plt.imshow(data)
     plt.show()
+

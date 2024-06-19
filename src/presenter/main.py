@@ -14,7 +14,6 @@ class Presenter:
     def __init__(self, model: Model):
         self.__model = model
 
-
     def __handlePlayerControl(self):
         keys = pg.key.get_pressed()
 
@@ -26,7 +25,6 @@ class Presenter:
             if event.type == pg.QUIT:
                 exit()
 
-
     def startGameplay(self):
         self.__model.setGameState(GameState.gameplay)
 
@@ -34,11 +32,11 @@ class Presenter:
         self.__model.initPlayer()
 
     def togglePause(self):
-        self.__model.setIsPause(not self.__model.isPause())
-        if self.__model.isPause():
-            self.__model.setGameState(GameState.pause)
-        else:
+        if self.__model.getGameState() == GameState.pause:
             self.__model.setGameState(GameState.gameplay)
+        else:
+            self.__model.setGameState(GameState.pause)
+
 
     def openSavesMenu(self):
         self.__model.setGameState(GameState.saves_menu)

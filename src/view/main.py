@@ -1,3 +1,5 @@
+import time
+
 import view.ui_arrangement
 from custom_types import *
 from presenter.main import Presenter
@@ -6,71 +8,74 @@ from custom_enums import GameState
 from view.constants import *
 
 import pygame as pg
+
 pg.init()
 
 
-class MainMenuView:
-    def __init__(self, screen: pg.display, presenter: Presenter):
-        self.__screen = screen
-        self.__presenter = presenter
-        self.__buttons = view.ui_arrangement.MainMenu
-
-        self.__buttons.start_btn.value.setActionOnClick(self.__presenter.startGameplay)
-        self.__buttons.saves_btn.value.setActionOnClick(self.__presenter.openSavesMenu)
-        self.__buttons.exit_btn.value.setActionOnClick(exit)
-
-    def update(self, mouse_state: MouseState):
-        self.__screen.fill(Colors.water_shadowed)
-
-        for btn in self.__buttons:
-            btn.value.update(self.__screen, mouse_state)
-
-
-
-class GameplayView:
-    def __init__(self, screen: pg.display, presenter: Presenter):
-        self.__screen = screen
-        self.__presenter = presenter
-        self.__buttons = view.ui_arrangement.GameplayGUI
-
-        self.__buttons.pause.value.setActionOnClick(self.__presenter.togglePause)
-
-    def update(self, mouse_state: MouseState):
-        self.__screen.fill(Colors.water)
-        self.__buttons.pause.value.update(self.__screen, mouse_state)
-
-
-class SavesMenuView:
-    def __init__(self, screen: pg.display, presenter: Presenter):
-        self.__screen = screen
-        self.__presenter = presenter
-
-        self.__buttons = view.ui_arrangement.SavesMenu
-        self.__buttons.main_menu.value.setActionOnClick(presenter.openMainMenu)
-        # self.__buttons.load_save.value.setActionOnClick(self.__presenter.)
-
-
-
-    def update(self, mouse_state: MouseState):
-        self.__screen.fill(Colors.water_shadowed)
-        for btn in self.__buttons:
-            btn.value.update(self.__screen, mouse_state)
-
-
-class PauseMenuView:
-    def __init__(self, screen: pg.display, presenter: Presenter):
-        self.__screen = screen
-        self.__presenter = presenter
-
-        self.__buttons = view.ui_arrangement.PauseMenu
-        self.__buttons.unpause.value.setActionOnClick(self.__presenter.togglePause)
-
-    def update(self, mouse_state: MouseState):
-        self.__screen.fill(Colors.water_shadowed)
-        for btn in self.__buttons:
-            btn.value.update(self.__screen, mouse_state)
-
 class View:
+    def __init__(self, screen: pg.display, presenter: Presenter, buttons: view.ui_arrangement):
+        self._screen = screen
+        self._presenter = presenter
+        self._buttons = buttons
+
+    def _buttonsUpdate(self, mouse_state: MouseState):
+        for btn in self._buttons:
+            btn.value.update(self._screen, mouse_state)
+
+
+
+class MainMenuView(View):
+    def __init__(self, screen: pg.display, presenter: Presenter):
+        super().__init__(screen, presenter, view.ui_arrangement.MainMenu)
+
+        self._buttons.start_btn.value.setActionOnClick(self._presenter.startGameplay)
+        self._buttons.saves_btn.value.setActionOnClick(self._presenter.openSavesMenu)
+        self._buttons.exit_btn.value.setActionOnClick(exit)
+
+    def update(self, mouse_state: MouseState):
+        self._screen.fill(Colors.water_shadowed)
+
+        super()._buttonsUpdate(mouse_state)
+
+class GameplayView(View):
+    def __init__(self, screen: pg.display, presenter: Presenter):
+        super().__init__(screen, presenter, view.ui_arrangement.GameplayGUI)
+
+        self._buttons.pause.value.setActionOnClick(self._presenter.togglePause)
+
+    def update(self, mouse_state: MouseState):
+        self._screen.fill(Colors.water)
+
+        super()._buttonsUpdate(mouse_state)
+
+
+class SavesMenuView(View):
+    def __init__(self, screen: pg.display, presenter: Presenter):
+        super().__init__(screen, presenter, view.ui_arrangement.SavesMenu)
+
+        self._buttons.main_menu.value.setActionOnClick(presenter.openMainMenu)
+        # self._buttons.load_save.value.setActionOnClick(self.__presenter.)
+
+    def update(self, mouse_state: MouseState):
+        self._screen.fill(Colors.water_shadowed)
+
+        super()._buttonsUpdate(mouse_state)
+
+
+class PauseMenuView(View):
+    def __init__(self, screen: pg.display, presenter: Presenter):
+        super().__init__(screen, presenter, view.ui_arrangement.PauseMenu)
+
+        self._buttons.unpause.value.setActionOnClick(self._presenter.togglePause)
+        self._buttons.main_menu.value.setActionOnClick(self._presenter.openMainMenu)
+
+    def update(self, mouse_state: MouseState):
+        self._screen.fill(Colors.water_shadowed)
+
+        super()._buttonsUpdate(mouse_state)
+
+
+class GeneralView:
     def __init__(self, presenter: Presenter, model: Model, screen_resolution: Vec2):
         self.__presenter = presenter
         self.__model = model
@@ -84,11 +89,14 @@ class View:
         self.__saves_menu_view = SavesMenuView(self.__screen, presenter)
         self.__pause_menu_view = PauseMenuView(self.__screen, presenter)
 
-    def update(self):
+    def updateMouseState(self):
         mouse_pressed = pg.mouse.get_pressed()
         self.__mouse_state.is_clicked_left = mouse_pressed[0]
         self.__mouse_state.is_clicked_right = mouse_pressed[2]
         self.__mouse_state.position = pg.mouse.get_pos()
+
+    def update(self):
+        self.updateMouseState()
 
         match self.__model.getGameState():
             case GameState.main_menu:
@@ -102,4 +110,3 @@ class View:
 
         pg.display.flip()
         self.__clock.tick(FPS_CAP)
-

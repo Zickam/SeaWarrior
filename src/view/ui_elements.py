@@ -38,7 +38,7 @@ class Button:
         return False
 
     def setActionOnClick(self, action: Callable):
-        if not isinstance(action, Callable):
+        if not callable(action):
             raise Exception(f"action should be FunctionType type. Actual type is {type(action)}")
         self.__action = action
 
