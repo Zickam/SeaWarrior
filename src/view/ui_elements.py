@@ -1,5 +1,4 @@
 from typing import Callable
-from typing import NamedTuple
 
 from custom_types import *
 from view.constants import *

@@ -1,8 +1,13 @@
 import pygame as pg
 
-from enums import *
-from model.models import Model
-from model import models
+from src.enums import *
+from src.model.models import Model
+
+
+class ConfigManager:
+    CONFIG_DIR = "data/config"
+    def __init__(self):
+        ...
 
 
 class Presenter:
@@ -37,3 +42,6 @@ class Presenter:
 
     def openSavesMenu(self):
         self.__model.setGameState(GameState.saves_menu)
+
+    def openMainMenu(self):
+        self.__model.setGameState(GameState.main_menu)

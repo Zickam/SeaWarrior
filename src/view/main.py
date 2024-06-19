@@ -1,11 +1,9 @@
-import enums
-import view.ui_arrangement
-from custom_types import *
-from presenter.main import Presenter
-from model.models import Model
-from enums import BlockType, GameState
-import model
-from view.constants import *
+import src.view.ui_arrangement
+from src.custom_types import *
+from src.presenter.main import Presenter
+from src.model.models import Model
+from src.enums import GameState
+from src.view.constants import *
 
 import pygame as pg
 pg.init()
@@ -15,7 +13,7 @@ class MainMenuView:
     def __init__(self, screen: pg.display, presenter: Presenter):
         self.__screen = screen
         self.__presenter = presenter
-        self.__buttons = view.ui_arrangement.MainMenu
+        self.__buttons = src.view.ui_arrangement.MainMenu
 
         self.__buttons.start_btn.value.setActionOnClick(self.__presenter.startGameplay)
         self.__buttons.saves_btn.value.setActionOnClick(self.__presenter.openSavesMenu)
@@ -35,7 +33,7 @@ class GameplayView:
     def __init__(self, screen: pg.display, presenter: Presenter):
         self.__screen = screen
         self.__presenter = presenter
-        self.__buttons = view.ui_arrangement.GameplayGUI
+        self.__buttons = src.view.ui_arrangement.GameplayGUI
 
         self.__buttons.pause.value.setActionOnClick(self.__presenter.togglePause)
 
@@ -44,9 +42,18 @@ class GameplayView:
 
 
 class SavesMenuView:
-    def __init__(self, screen: pg.display, ):
-        ...
+    def __init__(self, screen: pg.display, presenter: Presenter):
+        self.__screen = screen
+        self.__presenter = presenter
 
+        self.__buttons = src.view.ui_arrangement.SavesMenu
+        self.__buttons.main_menu.value.setActionOnClick(lambda x: presenter.openMainMenu)
+        # self.__buttons.load_save.value.setActionOnClick(self.__presenter.)
+
+
+
+    def update(self):
+        ...
 
 class View:
     def __init__(self, presenter: Presenter, model: Model, screen_resolution: Vec2):
@@ -58,7 +65,7 @@ class View:
 
         self.__main_menu_view = MainMenuView(self.__screen, presenter)
         self.__gameplay_view = GameplayView(self.__screen, presenter)
-        # self.__saves_menu_view = SavesMenuView(self.__screen, presenter)
+        self.__saves_menu_view = SavesMenuView(self.__screen, presenter)
 
 
     def update(self):
@@ -67,7 +74,6 @@ class View:
                 self.__main_menu_view.update()
             case GameState.saves_menu:
                 self.__saves_menu_view.update()
-                # self.__saves_menu_view.()
             case GameState.gameplay:
                 self.__gameplay_view.update()
 

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from custom_types import *
-from model import constants
-import enums
+from src.custom_types import *
+from src.model import constants
+from src import enums
 
 
 class Ship:
