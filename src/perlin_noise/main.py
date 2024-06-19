@@ -98,7 +98,7 @@ class Perlin2D:
 
         return tb
 
-    def getPerlinAt(self, point: Vec2, octaves: int, persistence: float = 0.5) -> float:
+    def getPerlinAt(self, point: Vec2, octaves: int, persistence: float = 0.1) -> float:
         tmp_point = [point[0], point[1]]
         amplitude = 1
         max_val = 0
@@ -155,7 +155,7 @@ class Perlin2D:
                         color = perlin[i][j]
                 perlin[i][j] = (color, color, color)
 
-    def getPerlin(self, resolution: Vec2, chunk_pos: Vec2, step: float, normalization_func_enum: Perlin2D.Normalization, octaves: int = 1) -> list[list[float]]:
+    def getPerlin(self, resolution: Vec2, chunk_pos: Vec2, step: float, normalization_func_enum: Perlin2D.Normalization, octaves: int = 1, persistence: float = 0.5) -> list[list[float]]:
         """Returns a matrix consisting of """
         if not (normalization_func_enum in Perlin2D.Normalization):
             raise Exception(f"Undefined normalization function: {normalization_func_enum}")
@@ -167,7 +167,7 @@ class Perlin2D:
             perlin_values.append([])
             while j < resolution[1]:
                 point = (i / resolution[0] + chunk_pos[0], j / resolution[1] + chunk_pos[1])
-                point_perlin = self.getPerlinAt(point, octaves)
+                point_perlin = self.getPerlinAt(point, octaves, persistence)
 
                 perlin_values[-1].append(point_perlin)
 
@@ -184,7 +184,7 @@ if __name__ == "__main__":
 
     # perlin = Perlin2D(9)
     #
-    # img = [[[0, 0, 0] for i in range(64)] for j in range(64)]
+    img = [[[0, 0, 0] for i in range(64)] for j in range(64)]
     # offsets = [
     #     (0, 0),
     #     (32, 0),
@@ -208,20 +208,51 @@ if __name__ == "__main__":
     perlin = Perlin2D(1)
 
     initial_map_size = 2, 2
-    chunk_resolution = 8, 8
+    chunk_size = 64
     perlin_step = 1
 
-    data = perlin.getPerlin(chunk_resolution, (0, 4.5), perlin_step,  Perlin2D.Normalization.no)
-    with open("data.txt", "w") as file:
-        for row in data:
-            row_str = ""
-            for i in row:
-                row_str += f"{i[0]}, "
-            file.write(row_str)
-            file.write("\n")
+    def _perlin(octaves, persistence):
+        offsets = [
+            (0, 0),
+            (1, 0),
+            (0, 1),
+            (1, 1)
+        ]
 
-    print(*data, sep="\n")
+        img = [[[0, 0, 0] for i in range(chunk_size * 2)] for j in range(chunk_size * 2)]
+        for offset in offsets:
+            p = perlin.getPerlin((chunk_size, chunk_size),
+                                 offset, perlin_step,  Perlin2D.Normalization.simple, octaves=octaves, persistence=persistence)
 
-    plt.imshow(data)
+            tmp_offset = offset[0] * chunk_size, offset[1] * chunk_size
+
+            p_i = 0
+            for i in range(tmp_offset[0], tmp_offset[0] + chunk_size):
+                p_j = 0
+                for j in range(tmp_offset[1], tmp_offset[1] + chunk_size):
+                    img[i][j] = p[p_i][p_j]
+                    p_j += 1
+                p_i += 1
+
+        return img
+
+
+    f, axarr = plt.subplots(2, 2)
+    axarr[0, 0].imshow(_perlin(8, 0.1))
+    axarr[0, 1].imshow(_perlin(8, 0.25))
+    axarr[1, 0].imshow(_perlin(8, 0.5))
+    axarr[1, 1].imshow(_perlin(8, 1))
+    # axarr.show()
+    # with open("data.txt", "w") as file:
+    #     for row in data:
+    #         row_str = ""
+    #         for i in row:
+    #             row_str += f"{i[0]}, "
+    #         file.write(row_str)
+    #         file.write("\n")
+    #
+    # print(*data, sep="\n")
+
+    # plt.imshow(img)
     plt.show()
 
