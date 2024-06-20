@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import numpy as np
+
 from custom_types import *
 from model import constants
-import custom_enums
+from perlin_noise import perlin
+from custom_enums import *
 
 class Ship:
     def __init__(self, coordinates: Vec2, hp: float):
@@ -20,34 +23,47 @@ class Ship:
         return self._hp
 
 
-class Chunk:
-    def __init__(self):
-        self.__elements: dict[Vec2, enums.BlockType] = dict()
-
-
 class Map:
-    def __init__(self, seed: int):
-        self.__map: dict[Vec2, Chunk] = dict()
-        self.__generator = generator.Generator(seed)
+    GROUND_LEVEL = 0.7
+    def __init__(self, seed: int, size: Vec2, scale: float):
+        self.__perlin = perlin.Perlin2D(seed)
 
-    def saveChunk(self, coordinates: Vec2):
-        ...
+        self.__perlin_map = self.__perlin.generatePerlin(size, scale, 1)
 
-    def generateChunk(self, coordinates: Vec2):
-        ...
+    def setBlockMap(self, block_map: list[list[BlockType]]):
+        self.__block_map = block_map
 
-    def loadChunk(self, coordinates: Vec2):
-        ...
+    def getBlockMap(self) -> list[list[BlockType]]:
+        return self.__block_map
 
 
 class Model:
     def __init__(self):
-        self.__state = custom_enums.GameState.main_menu
+        self.__state = GameState.main_menu
 
-        self.__player = Ship((0, 0), 100)
+        self.__player = Ship([0, 0], 100)
         self.__enemies: set[Ship] = set()
 
         self.__is_pause = False
+
+    def initBlockMap(self, seed: int = None):
+        self.__perlin = perlin.Perlin2D(seed)
+        self.__noise = self.__perlin.generatePerlin(constants.MAP_SIZE, constants.MAP_SCALE)
+        self.__map = Model.perlinToBlockMap(self.__noise)
+
+    @staticmethod
+    def perlinToBlockMap(perlin_map: np.array) -> list[list[BlockType]]:
+        block_map = []
+        for i in range(len(perlin_map)):
+            block_map.append([])
+            for j in range(len(perlin_map[i])):
+                block = BlockType.island if perlin_map[i, j] >= Map.GROUND_LEVEL else BlockType.water
+                block_map[-1].append(block)
+
+        return block_map
+
+    def getMap(self) -> list[list[BlockType]]:
+        return self.__map
 
     def isPause(self) -> bool:
         return self.__is_pause
@@ -57,7 +73,6 @@ class Model:
 
     def getPlayer(self) -> Ship:
         return self.__player
-
 
     def getGameState(self) -> custom_enums.GameState.__dict__:
         return self.__state
@@ -70,7 +85,6 @@ class Model:
         return Model()
 
     def initPlayer(self):
-        self.__player = Ship((0, 0), constants.PLAYER_BASE_HP)
+        self.__player = Ship([0, 0], constants.PLAYER_BASE_HP)
 
-    def initMap(self):
-        ...
+    # def initMap(self):

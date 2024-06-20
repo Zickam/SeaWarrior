@@ -1,8 +1,11 @@
 PLAYER_BASE_HP = 100
-player_base_damage = 25
-player_increment_damage = 5
+PLAYER_BASE_DAMAGE = 25
+PLAYER_INCREMENT_DAMAGE = 5
 
-bot_base_hp = 50
-bot_base_damage = 10
-bot_increment_damage = 5
+BOT_BASE_HP = 50
+BOT_BASE_DAMAGE = 10
+BOT_INCREMENT_DAMAGE = 5
+
+MAP_SIZE = 512, 512
+MAP_SCALE = 32
 

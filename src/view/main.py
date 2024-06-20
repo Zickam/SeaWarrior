@@ -43,8 +43,13 @@ class GameplayView(View):
 
         self._buttons.pause.value.setActionOnClick(self._presenter.togglePause)
 
+    def __drawPlayer(self):
+        pg.draw.circle(self._screen,  Colors.ship, (SCREEN_RESOLUTION[0] // 2, SCREEN_RESOLUTION[1] // 2), 10)
+
     def update(self, mouse_state: MouseState):
-        self._screen.fill(Colors.water)
+        self._screen.fill(Colors.red)
+
+        self.__drawPlayer()
 
         super()._buttonsUpdate(mouse_state)
 

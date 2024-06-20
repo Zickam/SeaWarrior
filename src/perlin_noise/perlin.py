@@ -17,6 +17,17 @@ class Perlin2D:
         self.__permutation_table = np.concatenate((self.__permutation_table, self.__permutation_table))
 
     @staticmethod
+    def __normalizationSimple(x: float) -> float:
+        return int(255 * abs(x))
+
+    @staticmethod
+    def __normalizationCustom(x: float, min_val: float, max_val: float) -> float:
+        offset = -min_val
+        if max_val + offset == 0:
+            return 0
+        return (x + offset) / (max_val + offset)
+
+    @staticmethod
     def __fade(t: float):
         return t * t * t * (t * (t * 6 - 15) + 10)
 
@@ -59,7 +70,30 @@ class Perlin2D:
 
         return self.__lerp(v, x1, x2)
 
-    def generatePerlin(self, size: Vec2, scale: float, octaves: int) -> np.array:
+    @staticmethod
+    def __getMaxAndMinValues(noise: list[list[float]]) -> tuple[float, float]:
+        min_perlin = 10 ** 10
+        max_perlin = -10 ** 10
+
+        for i in noise:
+            for j in i:
+                if j > max_perlin:
+                    max_perlin = j
+                if j < min_perlin:
+                    min_perlin = j
+
+        return max_perlin, min_perlin
+
+    @staticmethod
+    def normalizeNoise(noise: np.array):
+        max_val, min_val = Perlin2D.__getMaxAndMinValues(noise)
+
+        for i in range(len(noise)):
+            for j in range(len(noise[i])):
+                color = Perlin2D.__normalizationCustom(noise[i][j], min_val, max_val)
+                noise[i][j] = color
+
+    def generatePerlin(self, size: Vec2, scale: float, octaves: int = 1) -> np.array:
         noise = np.ones(size)
         for octave in range(octaves):
             for i in range(size[0]):
@@ -68,12 +102,14 @@ class Perlin2D:
                     y = j / scale
                     p = self.__getPerlinAt((x, y))
                     noise[i][j] *= p
+
+        self.normalizeNoise(noise)
         return noise
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
-    width, height = 1024, 512
+    width, height = 1024, 1024
     scale = 16
     octaves = 1
 
@@ -82,6 +118,6 @@ if __name__ == "__main__":
     noise = perlin.generatePerlin((width, height), scale, octaves)
     print(noise)
 
-    plt.imshow(noise, cmap="gray")
+    plt.imshow(noise,)
     # plt.colorbar()
     plt.show()
