@@ -109,6 +109,13 @@ class GeneralView:
         self.__saves_menu_view = SavesMenuView(self.__screen, presenter)
         self.__pause_menu_view = PauseMenuView(self.__screen, presenter)
 
+    def showFPS(self):
+        if hasattr(self.__model, "_player"):
+            message = f"FPS: {round(self.__clock.get_fps())} PLAYER_COORDS: {self.__model.getPlayer().getCoordinates()}"
+        else:
+            message = f"FPS: {round(self.__clock.get_fps())}"
+        pg.display.set_caption(message)
+
     def updateMouseState(self):
         mouse_pressed = pg.mouse.get_pressed()
         self.__mouse_state.is_clicked_left = mouse_pressed[0]
@@ -130,3 +137,4 @@ class GeneralView:
 
         pg.display.flip()
         self.__clock.tick(FPS_CAP)
+        self.showFPS()

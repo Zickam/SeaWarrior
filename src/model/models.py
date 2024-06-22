@@ -13,9 +13,19 @@ class Ship:
     def __init__(self, size: Vec2, coordinates: Vec2, hp: float):
         self._size = size
         self._coordinates = coordinates
+        self._old_coordinates = self._coordinates
         self._hp = hp
 
         self._rect = pg.rect.Rect((self._coordinates[0] - self._size[0] + SCREEN_RESOLUTION[0] // 2, self._coordinates[1] - self._size[1] + SCREEN_RESOLUTION[1] // 2), self._size)
+
+    def setOldCoordinates(self, coords: Vec2):
+        self._old_coordinates = coords
+
+    def getOldCoordinates(self) -> Vec2:
+        return self._old_coordinates
+
+    def setCoordinates(self, coords: Vec2):
+        self._coordinates = coords
 
     def getCoordinates(self) -> Vec2:
         return self._coordinates
@@ -45,7 +55,21 @@ class Block:
         self._block_type = block_type
         self._coords = coords
         self._size = size
+        self._is_outer = True
+        self._closest_water_coords = None
 
+    def setClosestWaterCoordinates(self, coords: Vec2):
+        self._closest_water_coords = coords
+
+    def getClosestWaterCoordinates(self) -> Vec2:
+        return self._closest_water_coords
+
+
+    def setIsOuter(self, is_outer: bool):
+        self._is_outer = is_outer
+
+    def getIsOuter(self) -> bool:
+        return self._is_outer
 
     def getCoordinates(self) -> Vec2:
         return self._coords
@@ -64,8 +88,6 @@ class Block:
             ),
             self._size
         )
-
-        # print(self._coords[0] - player_coords[0], self._coords[1] - player_coords[1])
 
     def getRect(self) -> pg.rect:
         return self._rect
@@ -93,7 +115,7 @@ class Model:
 
     @staticmethod
     def perlinToBlockMap(perlin_map: np.array) -> list[list[Block]]:
-        block_map = []
+        block_map: list[list[Block]] = []
         for i in range(-len(perlin_map) // 2, len(perlin_map) // 2):
             block_map.append([])
             for j in range(-len(perlin_map[i]) // 2, len(perlin_map[i]) // 2):
@@ -104,10 +126,44 @@ class Model:
                               block_size)
                 block_map[-1].append(block)
 
+        for i in range(len(block_map)):
+            for j in range(len(block_map[i])):
+                if i == 0 or i == len(block_map) - 1 or j == 0 or j == len(block_map) - 1:
+                    block_map[i][j].setIsOuter(True)
+                    continue
+
+                island_down = block_map[i + 1][j].getBlockType() == BlockType.island
+                island_up = block_map[i - 1][j].getBlockType() == BlockType.island
+                island_left = block_map[i][j - 1].getBlockType() == BlockType.island
+                island_right = block_map[i][j + 1].getBlockType() == BlockType.island
+                if block_map[i][j].getBlockType() == BlockType.island:
+                    if island_down\
+                         and island_up\
+                         and island_left\
+                         and island_right:
+                        block_map[i][j].setIsOuter(False)
+                    else:
+                        if not island_down:
+                            coords = block_map[i + 1][j].getCoordinates()
+                            closest_water = [coords[0] + 1, coords[1]]
+                        elif not island_up:
+                            coords = block_map[i - 1][j].getCoordinates()
+                            closest_water = [coords[0] - 1, coords[1]]
+                        elif not island_right:
+                            coords = block_map[i][j + 1].getCoordinates()
+                            closest_water = [coords[0], coords[1] + 1]
+                        elif not island_left:
+                            coords = block_map[i][j - 1].getCoordinates()
+                            closest_water = [coords[0], coords[1] - 1]
+                        else:
+                            raise Exception("closest_water is not defined (no matching island_*)!")
+                        # print(closest_water)
+                        block_map[i][j].setClosestWaterCoordinates(closest_water)
+
         return block_map
 
     def getPlayer(self) -> Ship:
-        return self.__player
+        return self._player
 
     def getGameState(self) -> custom_enums.GameState.__dict__:
         return self.__state
@@ -120,7 +176,7 @@ class Model:
         return Model()
 
     def initPlayer(self):
-        self.__player = Ship(SHIP_SIZE,
+        self._player = Ship(SHIP_SIZE,
                              [ + SHIP_SIZE[0] // 2,
                                + SHIP_SIZE[1] // 2],
                              PLAYER_BASE_HP)
