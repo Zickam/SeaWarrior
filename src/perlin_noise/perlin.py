@@ -109,8 +109,8 @@ class Perlin2D:
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
-    width, height = 1024, 1024
-    scale = 16
+    width, height = 256, 256
+    scale = 32
     octaves = 1
 
     perlin = Perlin2D()

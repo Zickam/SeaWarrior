@@ -15,6 +15,7 @@ def main():
         view.update()
         presenter.handleEvents()
 
+
 if __name__ == "__main__":
     current_dir = os.getcwd()
     print(current_dir)

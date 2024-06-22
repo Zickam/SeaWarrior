@@ -3,9 +3,10 @@ import time
 import view.ui_arrangement
 from custom_types import *
 from presenter.main import Presenter
-from model.models import Model
+from model.models import Model, Block
 from custom_enums import GameState
 from view.constants import *
+from custom_enums import BlockType
 
 import pygame as pg
 
@@ -43,12 +44,26 @@ class GameplayView(View):
 
         self._buttons.pause.value.setActionOnClick(self._presenter.togglePause)
 
+
     def __drawPlayer(self):
-        pg.draw.circle(self._screen,  Colors.ship, (SCREEN_RESOLUTION[0] // 2, SCREEN_RESOLUTION[1] // 2), 10)
+        pg.draw.rect(self._screen, Colors.ship, self._presenter.getPlayer().getRect())
+
+    def __drawWorld(self):
+        for coords, block in self._presenter.getVisibleBlockMap().items():
+            match block.getBlockType():
+                case BlockType.island:
+                    color = Colors.island
+                case BlockType.water:
+                    color = Colors.water
+                case other:
+                    raise Exception(f"Not defined color for BlockType: {other}")
+
+            pg.draw.rect(self._screen, color, block.getRect())
 
     def update(self, mouse_state: MouseState):
         self._screen.fill(Colors.red)
 
+        self.__drawWorld()
         self.__drawPlayer()
 
         super()._buttonsUpdate(mouse_state)

@@ -60,3 +60,5 @@ class Button:
                 mouse_state.last_left_click_time + self.CLICK_INTERVAL <= time.monotonic():
             mouse_state.last_left_click_time = time.monotonic()
             self.onClick()
+
+

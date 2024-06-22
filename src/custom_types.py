@@ -1,5 +1,8 @@
 from dataclasses import dataclass
 from collections import namedtuple
+import custom_enums
+
+import pygame as pg
 
 Vec2 = tuple[int | float, int | float]
 
@@ -9,6 +12,8 @@ class MouseState:
     is_clicked_right: bool
     position: Vec2
     last_left_click_time: float
+
+
 
 if __name__ == "__main__":
     ms = MouseState(
