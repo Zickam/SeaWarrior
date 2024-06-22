@@ -1,13 +1,17 @@
+import random
+import time
+
 import pygame as pg
 import numpy as np
 
+import model.models
 from custom_enums import *
 from model.models import Model, Block
 from custom_types import Vec2
 from model.constants import MAP_SIZE
 from view.constants import *
-from model.constants import PLAYER_SPEED, VISIBLE_SCREEN_MARGIN, COLLISION_DETECTION_RADIUS
-
+from model.constants import PLAYER_SPEED, VISIBLE_SCREEN_MARGIN, COLLISION_DETECTION_RADIUS, ENEMY_SPAWN_INTERVAL
+from model.constants import *
 
 class ConfigManager:
     CONFIG_DIR = "data/config"
@@ -18,8 +22,15 @@ class ConfigManager:
 class Presenter:
     def __init__(self, model: Model):
         self.__model = model
+        # self._visible_block_map = self.__updateVisibleBlockMap()
 
-    def getVisibleBlockMap(self) -> dict[Vec2, Block]:
+    def getEnemies(self):
+        return self.__model.getEnemies()
+
+    def getVisibleBlockMap(self):
+        return self._visible_block_map
+
+    def __updateVisibleBlockMap(self):
         player_coords = tuple(self.__model.getPlayer().getCoordinates())
 
         block_map = self.__model.getBlockMap()
@@ -38,7 +49,7 @@ class Presenter:
                 block.calculateRect(block_relative_to_screen_coords)
                 visible_block_map[block_coords] = block
 
-        return visible_block_map
+        self._visible_block_map = visible_block_map
 
     def getPlayer(self):
         return self.__model.getPlayer()
@@ -62,7 +73,6 @@ class Presenter:
             player_acceleration_vec[1] = PLAYER_SPEED
 
         self.__handleCollisions(player_acceleration_vec)
-        self.__model.getPlayer().setOldCoordinates(self.__model.getPlayer().getCoordinates())
 
 
     def handleEvents(self):
@@ -70,14 +80,11 @@ class Presenter:
             if event.type == pg.QUIT:
                 exit()
 
-        if hasattr(self.__model, "_player"):
-            self.__handlePlayerControl()
-
     def __handleCollisions(self, player_acceleration_vec: list[int]):
 
         player_anti_acceleration_vec = []
         for i in player_acceleration_vec:
-            player_anti_acceleration_vec.append(-i)
+            player_anti_acceleration_vec.append(5 * -i)
 
         player_coords = tuple(self.__model.getPlayer().getCoordinates())
         player_rect = self.__model.getPlayer().getRect()
@@ -99,7 +106,7 @@ class Presenter:
     def startGameplay(self):
         self.__model.setGameState(GameState.gameplay)
 
-        self.__model.initBlockMap(1)
+        self.__model.initBlockMap()
         self.__model.initPlayer()
 
     def togglePause(self):
@@ -114,4 +121,28 @@ class Presenter:
 
     def openMainMenu(self):
         self.__model.setGameState(GameState.main_menu)
+
+    def __handleEnemies(self):
+        if self.__model.getLastTimeEnemySpawned() + ENEMY_SPAWN_INTERVAL <= time.monotonic():
+            enemy_pos_x = random.randint(-MAP_SIZE[0] * DEFAULT_BLOCK_SIZE[0] // 2, MAP_SIZE[0] * DEFAULT_BLOCK_SIZE[0] // 2)
+            enemy_pos_y = random.randint(-MAP_SIZE[1] * DEFAULT_BLOCK_SIZE[1] // 2,
+                                         MAP_SIZE[1] * DEFAULT_BLOCK_SIZE[1] // 2)
+            print(enemy_pos_x, enemy_pos_y)
+            enemy = model.models.Ship(
+                SHIP_SIZE,
+                [enemy_pos_x, enemy_pos_y],
+                BOT_BASE_HP
+            )
+            self.__model.addEnemy(enemy)
+            self.__model.setLastTimeEnemySpawned(time.monotonic())
+
+
+    def tickGameplay(self):
+        if hasattr(self.__model, "_player"):
+            self.__updateVisibleBlockMap()
+            self.__handlePlayerControl()
+
+        self.__handleEnemies()
+
+
 

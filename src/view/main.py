@@ -44,6 +44,10 @@ class GameplayView(View):
 
         self._buttons.pause.value.setActionOnClick(self._presenter.togglePause)
 
+    def __drawEnemies(self):
+        raise Exception("DOESNT WORK")
+        for enemy in self._presenter.getEnemies():
+            pg.draw.rect(self._screen, Colors.enemy_ship, enemy.getRect())
 
     def __drawPlayer(self):
         pg.draw.rect(self._screen, Colors.ship, self._presenter.getPlayer().getRect())
@@ -66,8 +70,11 @@ class GameplayView(View):
     def update(self, mouse_state: MouseState):
         self._screen.fill(Colors.water)
 
+        self._presenter.tickGameplay()
+
         self.__drawWorld()
         self.__drawPlayer()
+        self.__drawEnemies()
 
         super()._buttonsUpdate(mouse_state)
 

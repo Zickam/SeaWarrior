@@ -45,6 +45,9 @@ class Ship:
     def getHP(self) -> float | int:
         return self._hp
 
+    def __hash__(self):
+        return id(self)
+
 
 class Block:
     def __init__(
@@ -103,7 +106,19 @@ class Model:
         self.__state = GameState.main_menu
 
         self.__enemies: set[Ship] = set()
+        self.__last_time_enemy_spawned = 0
 
+    def getEnemies(self) -> set[Ship]:
+        return self.__enemies
+
+    def getLastTimeEnemySpawned(self) -> float:
+        return self.__last_time_enemy_spawned
+
+    def setLastTimeEnemySpawned(self, _time: float):
+        self.__last_time_enemy_spawned = _time
+
+    def addEnemy(self, enemy: Ship):
+        self.__enemies.add(enemy)
 
     def initBlockMap(self, seed: int = None):
         self.__perlin = perlin.Perlin2D(seed)
