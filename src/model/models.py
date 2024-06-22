@@ -92,6 +92,9 @@ class Block:
     def getRect(self) -> pg.rect:
         return self._rect
 
+    def __hash__(self):
+        return id(self)
+
     def __str__(self) -> str:
         return f"{self._coords}, {self._block_type}"
 
@@ -110,7 +113,7 @@ class Model:
 
         self.__block_map = self.perlinToBlockMap(self.__noise)
 
-    def getBlockMap(self) -> list[list[Block]]:
+    def getBlockMap(self) -> set[Block]:
         return self.__block_map
 
     def __applyCollisions(self, block_map: list[list[Block]]):
@@ -142,7 +145,7 @@ class Model:
                         block_map[i][j].setIsPhysical(True)
 
 
-    def perlinToBlockMap(self, perlin_map: np.array) -> list[list[Block]]:
+    def perlinToBlockMap(self, perlin_map: np.array) -> set[Block]:
         block_map: list[list[Block]] = []
         for i in range(-len(perlin_map) // 2, len(perlin_map) // 2):
             block_map.append([])
@@ -155,7 +158,14 @@ class Model:
                 block_map[-1].append(block)
 
         self.__applyCollisions(block_map)
-        return block_map
+
+        _island_map = set()
+        for i in range(len(block_map)):
+            for j in range(len(block_map[i])):
+                if block_map[i][j].getBlockType() == BlockType.island:
+                    _island_map.add(block_map[i][j])
+
+        return _island_map
 
     def getPlayer(self) -> Ship:
         return self._player
