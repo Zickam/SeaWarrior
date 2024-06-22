@@ -55,13 +55,16 @@ class GameplayView(View):
                     color = Colors.island
                 case BlockType.water:
                     color = Colors.water
+                    continue
                 case other:
                     raise Exception(f"Not defined color for BlockType: {other}")
 
             pg.draw.rect(self._screen, color, block.getRect())
+            # print(block.getRect())
+        # print()
 
     def update(self, mouse_state: MouseState):
-        self._screen.fill(Colors.red)
+        self._screen.fill(Colors.water)
 
         self.__drawWorld()
         self.__drawPlayer()

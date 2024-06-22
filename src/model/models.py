@@ -16,7 +16,8 @@ class Ship:
         self._old_coordinates = self._coordinates
         self._hp = hp
 
-        self._rect = pg.rect.Rect((self._coordinates[0] - self._size[0] + SCREEN_RESOLUTION[0] // 2, self._coordinates[1] - self._size[1] + SCREEN_RESOLUTION[1] // 2), self._size)
+        self._rect = pg.rect.Rect((SCREEN_RESOLUTION[0] // 2 - size[0] // 2, SCREEN_RESOLUTION[1] // 2 - self._size[1] // 2), self._size)
+
 
     def setOldCoordinates(self, coords: Vec2):
         self._old_coordinates = coords
@@ -55,7 +56,7 @@ class Block:
         self._block_type = block_type
         self._coords = coords
         self._size = size
-        self._is_outer = True
+        self._is_physical = True
         self._closest_water_coords = None
 
     def setClosestWaterCoordinates(self, coords: Vec2):
@@ -64,12 +65,11 @@ class Block:
     def getClosestWaterCoordinates(self) -> Vec2:
         return self._closest_water_coords
 
+    def setIsPhysical(self, is_physical: bool):
+        self._is_physical = is_physical
 
-    def setIsOuter(self, is_outer: bool):
-        self._is_outer = is_outer
-
-    def getIsOuter(self) -> bool:
-        return self._is_outer
+    def getIsPhysical(self) -> bool:
+        return self._is_physical
 
     def getCoordinates(self) -> Vec2:
         return self._coords
@@ -108,28 +108,24 @@ class Model:
 
         # np.resize(self.__noise,  MAP_SIZE * 2)
 
-        self.__block_map = Model.perlinToBlockMap(self.__noise)
+        self.__block_map = self.perlinToBlockMap(self.__noise)
 
     def getBlockMap(self) -> list[list[Block]]:
         return self.__block_map
 
-    @staticmethod
-    def perlinToBlockMap(perlin_map: np.array) -> list[list[Block]]:
-        block_map: list[list[Block]] = []
-        for i in range(-len(perlin_map) // 2, len(perlin_map) // 2):
-            block_map.append([])
-            for j in range(-len(perlin_map[i]) // 2, len(perlin_map[i]) // 2):
-                block_type = BlockType.island if perlin_map[i, j] >= GROUND_LEVEL else BlockType.water
-                block_size = DEFAULT_BLOCK_SIZE
-                block = Block(block_type,
-                              (i * block_size[0], j * block_size[1]),
-                              block_size)
-                block_map[-1].append(block)
-
+    def __applyCollisions(self, block_map: list[list[Block]]):
         for i in range(len(block_map)):
             for j in range(len(block_map[i])):
                 if i == 0 or i == len(block_map) - 1 or j == 0 or j == len(block_map) - 1:
-                    block_map[i][j].setIsOuter(True)
+                    if i == 0:
+                        block_map[i][j].setClosestWaterCoordinates([i + 1, j])
+                    elif i == len(block_map) - 1:
+                        block_map[i][j].setClosestWaterCoordinates([i - 1, j])
+                    elif j == 0:
+                        block_map[i][j].setClosestWaterCoordinates([i, j + 1])
+                    elif j == len(block_map) - 1:
+                        block_map[i][j].setClosestWaterCoordinates([i, j - 1])
+                    block_map[i][j].setIsPhysical(True)
                     continue
 
                 island_down = block_map[i + 1][j].getBlockType() == BlockType.island
@@ -141,25 +137,24 @@ class Model:
                          and island_up\
                          and island_left\
                          and island_right:
-                        block_map[i][j].setIsOuter(False)
+                        block_map[i][j].setIsPhysical(False)
                     else:
-                        if not island_down:
-                            coords = block_map[i + 1][j].getCoordinates()
-                            closest_water = [coords[0] + 1, coords[1]]
-                        elif not island_up:
-                            coords = block_map[i - 1][j].getCoordinates()
-                            closest_water = [coords[0] - 1, coords[1]]
-                        elif not island_right:
-                            coords = block_map[i][j + 1].getCoordinates()
-                            closest_water = [coords[0], coords[1] + 1]
-                        elif not island_left:
-                            coords = block_map[i][j - 1].getCoordinates()
-                            closest_water = [coords[0], coords[1] - 1]
-                        else:
-                            raise Exception("closest_water is not defined (no matching island_*)!")
-                        # print(closest_water)
-                        block_map[i][j].setClosestWaterCoordinates(closest_water)
+                        block_map[i][j].setIsPhysical(True)
 
+
+    def perlinToBlockMap(self, perlin_map: np.array) -> list[list[Block]]:
+        block_map: list[list[Block]] = []
+        for i in range(-len(perlin_map) // 2, len(perlin_map) // 2):
+            block_map.append([])
+            for j in range(-len(perlin_map[i]) // 2, len(perlin_map[i]) // 2):
+                block_type = BlockType.island if perlin_map[i, j] >= GROUND_LEVEL else BlockType.water
+                block_size = DEFAULT_BLOCK_SIZE
+                block = Block(block_type,
+                              (i * block_size[0], j * block_size[1]),
+                              block_size)
+                block_map[-1].append(block)
+
+        self.__applyCollisions(block_map)
         return block_map
 
     def getPlayer(self) -> Ship:
@@ -177,8 +172,12 @@ class Model:
 
     def initPlayer(self):
         self._player = Ship(SHIP_SIZE,
-                             [ + SHIP_SIZE[0] // 2,
-                               + SHIP_SIZE[1] // 2],
+                             # [SHIP_SIZE[0] // 2,
+                             #   + SHIP_SIZE[1] // 2],
+                            [
+                                0,
+                                0
+                            ],
                              PLAYER_BASE_HP)
 
 

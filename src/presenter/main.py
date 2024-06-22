@@ -18,17 +18,14 @@ class ConfigManager:
 class Presenter:
     def __init__(self, model: Model):
         self.__model = model
-        self.__previous_visible_block_map = {(0, 0): {}}
 
     def getVisibleBlockMap(self) -> dict[Vec2, Block]:
         player_coords = tuple(self.__model.getPlayer().getCoordinates())
-        if player_coords in self.__previous_visible_block_map:
-            return self.__previous_visible_block_map[player_coords]
 
         block_map = self.__model.getBlockMap()
 
         visible_block_map_top_left_coordinates = player_coords[0] - SCREEN_RESOLUTION[0] // 2, player_coords[1] - SCREEN_RESOLUTION[1] // 2
-        visible_block_map_bottom_right_coordinates = player_coords[0] // 2 + SCREEN_RESOLUTION[0] // 2, player_coords[1] // 2 + SCREEN_RESOLUTION[1] // 2
+        visible_block_map_bottom_right_coordinates = player_coords[0] + SCREEN_RESOLUTION[0] // 2, player_coords[1] + SCREEN_RESOLUTION[1] // 2
 
         visible_block_map = {}
 
@@ -42,8 +39,6 @@ class Presenter:
                     block.calculateRect(block_relative_to_screen_coords)
                     visible_block_map[block_coords] = block
 
-        self.__previous_visible_block_map[player_coords] = visible_block_map
-
         return visible_block_map
 
     def getPlayer(self):
@@ -52,16 +47,22 @@ class Presenter:
     def __handlePlayerControl(self):
         keys = pg.key.get_pressed()
 
+        player_acceleration_vec = [0, 0, 0, 0] # up, down, left, right
+
         if keys[pg.K_d]:
             self.__model.getPlayer().changeCoordinatesBy((+PLAYER_SPEED, 0))
+            player_acceleration_vec[3] = PLAYER_SPEED
         if keys[pg.K_a]:
             self.__model.getPlayer().changeCoordinatesBy((-PLAYER_SPEED, 0))
+            player_acceleration_vec[2] = -PLAYER_SPEED
         if keys[pg.K_w]:
             self.__model.getPlayer().changeCoordinatesBy((0, -PLAYER_SPEED))
+            player_acceleration_vec[0] = -PLAYER_SPEED
         if keys[pg.K_s]:
             self.__model.getPlayer().changeCoordinatesBy((0, +PLAYER_SPEED))
+            player_acceleration_vec[1] = PLAYER_SPEED
 
-        self.__handleCollisions()
+        self.__handleCollisions(player_acceleration_vec)
         self.__model.getPlayer().setOldCoordinates(self.__model.getPlayer().getCoordinates())
 
 
@@ -73,23 +74,28 @@ class Presenter:
         if hasattr(self.__model, "_player"):
             self.__handlePlayerControl()
 
-    def __handleCollisions(self):
+    def __handleCollisions(self, player_acceleration_vec: list[int]):
+
+        player_anti_acceleration_vec = []
+        for i in player_acceleration_vec:
+            player_anti_acceleration_vec.append(-i)
+
         player_coords = tuple(self.__model.getPlayer().getCoordinates())
-        if player_coords in self.__previous_visible_block_map:
-            for block_coords, block in self.__previous_visible_block_map[player_coords].items():
-                if block.getBlockType() == BlockType.island and block.getIsOuter():
-                    distance = ((block_coords[0] - player_coords[0]) ** 2 + (block_coords[1] - player_coords[1]) ** 2) ** 0.5
+        player_rect = self.__model.getPlayer().getRect()
 
-                    if distance <= COLLISION_DETECTION_RADIUS:
-                        block_size = block.getSize()
+        for block_coords, block in self.getVisibleBlockMap().items():
+            if block.getBlockType() == BlockType.island and block.getIsPhysical():
+                distance = ((block_coords[0] - player_coords[0]) ** 2 + (block_coords[1] - player_coords[1]) ** 2) ** 0.5
 
-                        block_top_left = block_coords[0], block_coords[1]
-                        block_bottom_right = block_coords[0] + block_size[0], block_coords[1] + block_size[1]
+                if distance <= COLLISION_DETECTION_RADIUS:
+                    do_collide = block.getRect().colliderect(player_rect)
+                    if do_collide:
+                        self.__model.getPlayer().changeCoordinatesBy((0, player_anti_acceleration_vec[0]))
+                        self.__model.getPlayer().changeCoordinatesBy((0, player_anti_acceleration_vec[1]))
+                        self.__model.getPlayer().changeCoordinatesBy((player_anti_acceleration_vec[2], 0))
+                        self.__model.getPlayer().changeCoordinatesBy((player_anti_acceleration_vec[3], 0))
 
-                        if block_top_left[0] <= player_coords[0] <= block_bottom_right[0] and \
-                            block_top_left[1] <= player_coords[1] <= block_bottom_right[1]:
-                            self.__model.getPlayer().setCoordinates(block.getClosestWaterCoordinates())
-
+                        # print(f"colission")
 
     def startGameplay(self):
         self.__model.setGameState(GameState.gameplay)
