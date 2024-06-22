@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pygame as pg
 
-import view.constants
+from view.constants import SCREEN_RESOLUTION
 from custom_types import *
 from perlin_noise import perlin
 from custom_enums import *
@@ -15,7 +15,7 @@ class Ship:
         self._coordinates = coordinates
         self._hp = hp
 
-        self._rect = pg.rect.Rect((self._coordinates[0] - self._size[0] + view.constants.SCREEN_RESOLUTION[0] // 2, self._coordinates[1] - self._size[1] + view.constants.SCREEN_RESOLUTION[1] // 2), self._size)
+        self._rect = pg.rect.Rect((self._coordinates[0] - self._size[0] + SCREEN_RESOLUTION[0] // 2, self._coordinates[1] - self._size[1] + SCREEN_RESOLUTION[1] // 2), self._size)
 
     def getCoordinates(self) -> Vec2:
         return self._coordinates
@@ -56,22 +56,28 @@ class Block:
     def getBlockType(self) -> BlockType:
         return self._block_type
 
-    def calculateRect(self, player_coords: Vec2):
-        self._rect = pg.rect.Rect(((self._coords[0]) // 2 + self._size[0] + view.constants.SCREEN_RESOLUTION[0] // 2 + player_coords[0],
-                                   (self._coords[1]) // 2 + self._size[1] + view.constants.SCREEN_RESOLUTION[1] // 2 + player_coords[1]),
-                                  self._size)
+    def calculateRect(self, relative_to_screen_coords: Vec2):
+        self._rect = pg.rect.Rect(
+            (
+                relative_to_screen_coords[0] + self._size[0] // 2,
+                relative_to_screen_coords[1] + self._size[1] // 2
+            ),
+            self._size
+        )
+
+        # print(self._coords[0] - player_coords[0], self._coords[1] - player_coords[1])
 
     def getRect(self) -> pg.rect:
         return self._rect
+
+    def __str__(self) -> str:
+        return f"{self._coords}, {self._block_type}"
 
 class Model:
     def __init__(self):
         self.__state = GameState.main_menu
 
         self.__enemies: set[Ship] = set()
-
-        self.__is_pause = False
-
 
 
     def initBlockMap(self, seed: int = None):
@@ -100,12 +106,6 @@ class Model:
 
         return block_map
 
-    def isPause(self) -> bool:
-        return self.__is_pause
-
-    def setIsPause(self, is_pause: bool):
-        self.__is_pause = is_pause
-
     def getPlayer(self) -> Ship:
         return self.__player
 
@@ -124,7 +124,6 @@ class Model:
                              [ + SHIP_SIZE[0] // 2,
                                + SHIP_SIZE[1] // 2],
                              PLAYER_BASE_HP)
-        print(self.__player.getCoordinates())
 
 
     # def initMap(self):
