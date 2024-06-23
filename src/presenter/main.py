@@ -95,9 +95,14 @@ class Presenter:
         for enemy in self.__model.getEnemies():
             entities.add(enemy)
 
-        for entity in entities:
-            for block in self.__model.getBlockMap():
+        for block in self.getVisibleBlockMap().values():
+            for entity in entities:
                 self.__handleObjectCollisions(entity, block)
+
+        for entity1 in entities:
+            for entity2 in entities:
+                if entity1 != entity2:
+                    self.__handleObjectCollisions(entity1, entity2)
 
     def __handleObjectCollisions(self, _object1: Ship | Block, _object2: Ship | Block):
         _object1_coords = _object1.getCoordinates()
@@ -116,25 +121,6 @@ class Presenter:
 
                 _object1.changeCoordinatesBy((0, object1_anti_acceleration_vec[1]))
                 _object1.changeCoordinatesBy((object1_anti_acceleration_vec[0], 0))
-
-
-    def __handleBlockCollisions(self, player_acceleration_vec: list[float]):
-        player_anti_acceleration_vec = []
-        for i in player_acceleration_vec:
-            player_anti_acceleration_vec.append(5 * -i)
-
-        player_coords = tuple(self.__model.getPlayer().getCoordinates())
-        player_rect = self.__model.getPlayer().getRect()
-
-        for block_coords, block in self.getVisibleBlockMap().items():
-            if block.getIsPhysical():
-                distance = ((block_coords[0] - player_coords[0]) ** 2 + (block_coords[1] - player_coords[1]) ** 2) ** 0.5
-
-                if distance <= COLLISION_DETECTION_RADIUS:
-                    do_collide = block.getRect().colliderect(player_rect)
-                    if do_collide:
-                        self.__model.getPlayer().changeCoordinatesBy((0, player_anti_acceleration_vec[1]))
-                        self.__model.getPlayer().changeCoordinatesBy((player_anti_acceleration_vec[0], 0))
 
     @staticmethod
     def __applyCollisionsToBlockMap(block_map: list[list[Block]]):
@@ -269,7 +255,6 @@ class Presenter:
                 SHIP_SIZE,
                 BOT_BASE_HP
             )
-            print(enemy_pos_x, enemy_pos_y)
             self.__model.addEnemy(enemy)
             self.__model.setLastTimeEnemySpawned(time.monotonic())
 
