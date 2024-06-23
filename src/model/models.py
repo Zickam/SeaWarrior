@@ -32,8 +32,8 @@ class Ship:
         return self._coordinates
 
     def calculateRect(self, screen_coords: Vec2):
-        self._rect = pg.rect.Rect((screen_coords[0] // 2 + self._size[0] // 2,
-                                   screen_coords[1] // 2 + self._size[1] // 2),
+        self._rect = pg.rect.Rect((screen_coords[0] + self._size[0] // 2,
+                                   screen_coords[1] + self._size[1] // 2),
                                   self._size)
 
     def getRect(self) -> pg.Rect:

@@ -135,17 +135,29 @@ class Presenter:
             if visible_block_map_top_left_coordinates[0] <= enemy_coords[0] <= visible_block_map_bottom_right_coordinates[0] and \
                 visible_block_map_top_left_coordinates[1] <= enemy_coords[1] <= visible_block_map_bottom_right_coordinates[1]:
                 enemy_relative_to_player_coords = enemy.getCoordinates()[0] - player_coords[0], enemy.getCoordinates()[1] - player_coords[1]
-                print(enemy_relative_to_player_coords)
                 enemy_relative_to_screen_coords = enemy_relative_to_player_coords[0] + SCREEN_RESOLUTION[0] // 2, enemy_relative_to_player_coords[1] + SCREEN_RESOLUTION[1] // 2
+
                 enemy.calculateRect(enemy_relative_to_screen_coords)
                 enemy.setIsVisible(True)
             else:
                 enemy.setIsVisible(False)
 
     def _handleEnemiesMoving(self):
-        ...
+        player_coords = self.__model.getPlayer().getCoordinates()
         for enemy in self.__model.getEnemies():
-            enemy.changeCoordinatesBy((0.01, 0))
+            enemy_coords = enemy.getCoordinates()
+            enemy_to_player_vec = [enemy_coords[0] - player_coords[0],
+                                   enemy_coords[1] - player_coords[1]]
+            if enemy_to_player_vec[0] >= 0:
+                enemy_to_player_vec[0] = -ENEMY_SPEED
+            else:
+                enemy_to_player_vec[0] = +ENEMY_SPEED
+            if enemy_to_player_vec[1] >= 0:
+                enemy_to_player_vec[1] = -ENEMY_SPEED
+            else:
+                enemy_to_player_vec[1] = +ENEMY_SPEED
+
+            enemy.changeCoordinatesBy(enemy_to_player_vec)
 
     def __handleEnemies(self):
         if self.__model.getLastTimeEnemySpawned() + ENEMY_SPAWN_INTERVAL <= time.monotonic():
@@ -157,6 +169,7 @@ class Presenter:
                 [enemy_pos_x, enemy_pos_y],
                 BOT_BASE_HP
             )
+            print(enemy_pos_x, enemy_pos_y)
             self.__model.addEnemy(enemy)
             self.__model.setLastTimeEnemySpawned(time.monotonic())
 

@@ -49,7 +49,6 @@ class GameplayView(View):
             if enemy.getIsVisible():
                 pg.draw.rect(self._screen, Colors.enemy_ship, enemy.getRect())
 
-
     def __drawPlayer(self):
         pg.draw.rect(self._screen, Colors.ship, self._presenter.getPlayer().getRect())
 
