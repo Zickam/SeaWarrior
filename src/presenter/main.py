@@ -34,6 +34,9 @@ class Presenter:
         #     self.__updateVisibleBlockMap()
         return self._visible_block_map
 
+    def __updateVisibleObjects(self):
+        ...
+
     def __updateVisibleBlockMap(self):
         player_coords = tuple(self.__model.getPlayer().getCoordinates())
 
@@ -58,25 +61,28 @@ class Presenter:
     def getPlayer(self):
         return self.__model.getPlayer()
 
-    def __handlePlayerControl(self):
+    def __handlePlayerControl(self) -> list[float]:
         keys = pg.key.get_pressed()
 
-        player_acceleration_vec = [0, 0, 0, 0] # up, down, left, right
+        player_acceleration_vec = [0, 0] # up, down, left, right
+        player = self.__model.getPlayer()
 
         if keys[pg.K_d]:
-            self.__model.getPlayer().changeCoordinatesBy((+PLAYER_SPEED, 0))
-            player_acceleration_vec[3] = PLAYER_SPEED
+            player.changeCoordinatesBy((+PLAYER_SPEED, 0))
+            player_acceleration_vec[0] += PLAYER_SPEED
         if keys[pg.K_a]:
-            self.__model.getPlayer().changeCoordinatesBy((-PLAYER_SPEED, 0))
-            player_acceleration_vec[2] = -PLAYER_SPEED
+            player.changeCoordinatesBy((-PLAYER_SPEED, 0))
+            player_acceleration_vec[0] += -PLAYER_SPEED
         if keys[pg.K_w]:
-            self.__model.getPlayer().changeCoordinatesBy((0, -PLAYER_SPEED))
-            player_acceleration_vec[0] = -PLAYER_SPEED
+            player.changeCoordinatesBy((0, -PLAYER_SPEED))
+            player_acceleration_vec[1] += -PLAYER_SPEED
         if keys[pg.K_s]:
-            self.__model.getPlayer().changeCoordinatesBy((0, +PLAYER_SPEED))
-            player_acceleration_vec[1] = PLAYER_SPEED
+            player.changeCoordinatesBy((0, +PLAYER_SPEED))
+            player_acceleration_vec[1] += PLAYER_SPEED
 
-        self.__handleCollisions(player_acceleration_vec)
+        player.setAcceleration(player_acceleration_vec)
+        return player_acceleration_vec
+
 
 
     def handleEvents(self):
@@ -84,8 +90,35 @@ class Presenter:
             if event.type == pg.QUIT:
                 exit()
 
-    def __handleCollisions(self, player_acceleration_vec: list[int]):
+    def __handleCollisions(self, player_acceleration_vec: list[float]):
+        entities = {self.__model.getPlayer()}
+        for enemy in self.__model.getEnemies():
+            entities.add(enemy)
 
+        for entity in entities:
+            for block in self.__model.getBlockMap():
+                self.__handleObjectCollisions(entity, block)
+
+    def __handleObjectCollisions(self, _object1: Ship | Block, _object2: Ship | Block):
+        _object1_coords = _object1.getCoordinates()
+        _object2_coords = _object2.getCoordinates()
+
+        distance = ((_object2_coords[0] - _object1_coords[0]) ** 2 + (
+                _object2_coords[1] - _object1_coords[1]) ** 2) ** 0.5
+
+        if distance <= COLLISION_DETECTION_RADIUS:
+            do_collide = _object1.getRect().colliderect(_object2.getRect())
+            if do_collide:
+                object1_acceleration_vec = _object1.getAcceleration()
+                object1_anti_acceleration_vec = []
+                for i in object1_acceleration_vec:
+                    object1_anti_acceleration_vec.append(5 * -i)
+
+                _object1.changeCoordinatesBy((0, object1_anti_acceleration_vec[1]))
+                _object1.changeCoordinatesBy((object1_anti_acceleration_vec[0], 0))
+
+
+    def __handleBlockCollisions(self, player_acceleration_vec: list[float]):
         player_anti_acceleration_vec = []
         for i in player_acceleration_vec:
             player_anti_acceleration_vec.append(5 * -i)
@@ -100,10 +133,8 @@ class Presenter:
                 if distance <= COLLISION_DETECTION_RADIUS:
                     do_collide = block.getRect().colliderect(player_rect)
                     if do_collide:
-                        self.__model.getPlayer().changeCoordinatesBy((0, player_anti_acceleration_vec[0]))
                         self.__model.getPlayer().changeCoordinatesBy((0, player_anti_acceleration_vec[1]))
-                        self.__model.getPlayer().changeCoordinatesBy((player_anti_acceleration_vec[2], 0))
-                        self.__model.getPlayer().changeCoordinatesBy((player_anti_acceleration_vec[3], 0))
+                        self.__model.getPlayer().changeCoordinatesBy((player_anti_acceleration_vec[0], 0))
 
     @staticmethod
     def __applyCollisionsToBlockMap(block_map: list[list[Block]]):
@@ -129,13 +160,12 @@ class Presenter:
         _perlin = perlin.Perlin2D(seed)
         _noise = _perlin.generatePerlin(MAP_SIZE, MAP_SCALE)
 
-        # np.resize(self.__noise,  MAP_SIZE * 2)
-
-        block_map = self.perlinToBlockMap(_noise)
+        block_map = self.__perlinToBlockMap(_noise)
         self.__model.setBlockMap(block_map)
 
 
-    def perlinToBlockMap(self, perlin_map: np.array) -> set[Block]:
+    @staticmethod
+    def __perlinToBlockMap(perlin_map: np.array) -> set[Block]:
         block_map: list[list[Block]] = []
         for i in range(-len(perlin_map) // 2, len(perlin_map) // 2):
             block_map.append([])
@@ -148,7 +178,7 @@ class Presenter:
                     block_type)
                 block_map[-1].append(block)
 
-        self.__applyCollisionsToBlockMap(block_map)
+        Presenter.__applyCollisionsToBlockMap(block_map)
 
         _island_map = set()
         for i in range(len(block_map)):
@@ -225,6 +255,7 @@ class Presenter:
             else:
                 enemy_to_player_vec[1] = +ENEMY_SPEED
 
+            enemy.setAcceleration(enemy_to_player_vec)
             enemy.changeCoordinatesBy(enemy_to_player_vec)
 
     def __handleEnemies(self):
@@ -246,11 +277,12 @@ class Presenter:
 
         self._calculateEnemiesRect()
 
-
     def tickGameplay(self):
         if hasattr(self.__model, "_player"):
             self.__updateVisibleBlockMap()
-            self.__handlePlayerControl()
+            player_acceleration_vec = self.__handlePlayerControl()
+
+            self.__handleCollisions(player_acceleration_vec)
 
         self.__handleEnemies()
 

@@ -21,6 +21,13 @@ class Object:
             self._size)
         self._is_visible = False
         self._is_physical = is_physical
+        self._acceleration = 0, 0
+
+    def getAcceleration(self) -> Vec2:
+        return self._acceleration
+
+    def setAcceleration(self, acceleration: Vec2):
+        self._acceleration = acceleration
 
     def getIsPhysical(self) -> bool:
         return self._is_physical
