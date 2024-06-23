@@ -111,65 +111,17 @@ class Model:
     def addEnemy(self, enemy: Ship):
         self.__enemies.add(enemy)
 
-    def initBlockMap(self, seed: int = None):
-        self.__perlin = perlin.Perlin2D(seed)
-        self.__noise = self.__perlin.generatePerlin(MAP_SIZE, MAP_SCALE)
-
-        # np.resize(self.__noise,  MAP_SIZE * 2)
-
-        self.__block_map = self.perlinToBlockMap(self.__noise)
-
     def getBlockMap(self) -> set[Block]:
-        return self.__block_map
+        return self._block_map
 
-    def __applyCollisions(self, block_map: list[list[Block]]):
-        for i in range(len(block_map)):
-            for j in range(len(block_map[i])):
-                if i == 0 or i == len(block_map) - 1 or j == 0 or j == len(block_map) - 1:
-                    continue
-                    block_map[i][j].setBlockType(BlockType.island)
-                    block_map[i][j].setIsPhysical(True)
-                    continue
-
-                island_down = block_map[i + 1][j].getBlockType() == BlockType.island
-                island_up = block_map[i - 1][j].getBlockType() == BlockType.island
-                island_left = block_map[i][j - 1].getBlockType() == BlockType.island
-                island_right = block_map[i][j + 1].getBlockType() == BlockType.island
-                if block_map[i][j].getBlockType() == BlockType.island:
-                    if island_down\
-                         and island_up\
-                         and island_left\
-                         and island_right:
-                        block_map[i][j].setIsPhysical(False)
-                    else:
-                        block_map[i][j].setIsPhysical(True)
-
-
-    def perlinToBlockMap(self, perlin_map: np.array) -> set[Block]:
-        block_map: list[list[Block]] = []
-        for i in range(-len(perlin_map) // 2, len(perlin_map) // 2):
-            block_map.append([])
-            for j in range(-len(perlin_map[i]) // 2, len(perlin_map[i]) // 2):
-                block_type = BlockType.island if perlin_map[i, j] >= GROUND_LEVEL else BlockType.water
-                block_size = DEFAULT_BLOCK_SIZE
-                block = Block(
-                    (i * block_size[0], j * block_size[1]),
-                    block_size,
-                    block_type)
-                block_map[-1].append(block)
-
-        self.__applyCollisions(block_map)
-
-        _island_map = set()
-        for i in range(len(block_map)):
-            for j in range(len(block_map[i])):
-                if block_map[i][j].getBlockType() == BlockType.island:
-                    _island_map.add(block_map[i][j])
-
-        return _island_map
+    def setBlockMap(self, block_map: set[Block]):
+        self._block_map = block_map
 
     def getPlayer(self) -> Ship:
         return self._player
+
+    def setPlayer(self, player: Ship):
+        self._player = player
 
     def getGameState(self) -> custom_enums.GameState.__dict__:
         return self.__state
@@ -178,19 +130,6 @@ class Model:
         self.__state = game_state
 
     @staticmethod
-    def restartGame(self) -> Model:
+    def restartGame() -> Model:
         return Model()
 
-    def initPlayer(self):
-        self._player = Ship(
-                             # [SHIP_SIZE[0] // 2,
-                             #   + SHIP_SIZE[1] // 2],
-                            [
-                                0,
-                                0
-                            ],
-            SHIP_SIZE,
-                             PLAYER_BASE_HP)
-
-
-    # def initMap(self):

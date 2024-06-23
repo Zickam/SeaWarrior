@@ -13,6 +13,7 @@ from view.constants import *
 from model.constants import PLAYER_SPEED, VISIBLE_SCREEN_MARGIN, COLLISION_DETECTION_RADIUS, ENEMY_SPAWN_INTERVAL
 from model.constants import *
 from model.models import Ship
+from perlin_noise import perlin
 
 class ConfigManager:
     CONFIG_DIR = "data/config"
@@ -29,6 +30,8 @@ class Presenter:
         return self.__model.getEnemies()
 
     def getVisibleBlockMap(self):
+        # if not hasattr(self, "_visible_block_map"):
+        #     self.__updateVisibleBlockMap()
         return self._visible_block_map
 
     def __updateVisibleBlockMap(self):
@@ -102,12 +105,77 @@ class Presenter:
                         self.__model.getPlayer().changeCoordinatesBy((player_anti_acceleration_vec[2], 0))
                         self.__model.getPlayer().changeCoordinatesBy((player_anti_acceleration_vec[3], 0))
 
+    @staticmethod
+    def __applyCollisionsToBlockMap(block_map: list[list[Block]]):
+        for i in range(len(block_map)):
+            for j in range(len(block_map[i])):
+                if i == 0 or i == len(block_map) - 1 or j == 0 or j == len(block_map) - 1:
+                    continue
+
+                island_down = block_map[i + 1][j].getBlockType() == BlockType.island
+                island_up = block_map[i - 1][j].getBlockType() == BlockType.island
+                island_left = block_map[i][j - 1].getBlockType() == BlockType.island
+                island_right = block_map[i][j + 1].getBlockType() == BlockType.island
+                if block_map[i][j].getBlockType() == BlockType.island:
+                    if island_down\
+                         and island_up\
+                         and island_left\
+                         and island_right:
+                        block_map[i][j].setIsPhysical(False)
+                    else:
+                        block_map[i][j].setIsPhysical(True)
+
+    def __initBlockMap(self, seed: int = None):
+        _perlin = perlin.Perlin2D(seed)
+        _noise = _perlin.generatePerlin(MAP_SIZE, MAP_SCALE)
+
+        # np.resize(self.__noise,  MAP_SIZE * 2)
+
+        block_map = self.perlinToBlockMap(_noise)
+        self.__model.setBlockMap(block_map)
+
+
+    def perlinToBlockMap(self, perlin_map: np.array) -> set[Block]:
+        block_map: list[list[Block]] = []
+        for i in range(-len(perlin_map) // 2, len(perlin_map) // 2):
+            block_map.append([])
+            for j in range(-len(perlin_map[i]) // 2, len(perlin_map[i]) // 2):
+                block_type = BlockType.island if perlin_map[i, j] >= GROUND_LEVEL else BlockType.water
+                block_size = DEFAULT_BLOCK_SIZE
+                block = Block(
+                    (i * block_size[0], j * block_size[1]),
+                    block_size,
+                    block_type)
+                block_map[-1].append(block)
+
+        self.__applyCollisionsToBlockMap(block_map)
+
+        _island_map = set()
+        for i in range(len(block_map)):
+            for j in range(len(block_map[i])):
+                if block_map[i][j].getBlockType() == BlockType.island:
+                    _island_map.add(block_map[i][j])
+
+        return _island_map
+
+    def __initPlayer(self):
+        player = Ship(
+            # [SHIP_SIZE[0] // 2,
+            #   + SHIP_SIZE[1] // 2],
+            [
+                0,
+                0
+            ],
+            SHIP_SIZE,
+            PLAYER_BASE_HP)
+        self.__model.setPlayer(player)
 
     def startGameplay(self):
         self.__model.setGameState(GameState.gameplay)
 
-        self.__model.initBlockMap()
-        self.__model.initPlayer()
+        self.__initBlockMap()
+        self.__initPlayer()
+        print("inited")
 
     def togglePause(self):
         if self.__model.getGameState() == GameState.pause:
