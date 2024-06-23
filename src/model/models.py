@@ -9,21 +9,27 @@ from perlin_noise import perlin
 from custom_enums import *
 from model.constants import *
 
-class Ship:
-    def __init__(self, size: Vec2, coordinates: Vec2, hp: float):
-        self._size = size
+
+class Object:
+    def __init__(self,  coordinates: Vec2, size: Vec2, is_physical: bool = False, hp: float = None):
         self._coordinates = coordinates
-        self._old_coordinates = self._coordinates
+        self._size = size
         self._hp = hp
 
-        self._rect = pg.rect.Rect((SCREEN_RESOLUTION[0] // 2 - self._size[0] // 2, SCREEN_RESOLUTION[1] // 2 - self._size[1] // 2), self._size)
+        self._rect = pg.rect.Rect(
+            (SCREEN_RESOLUTION[0] // 2 - self._size[0] // 2, SCREEN_RESOLUTION[1] // 2 - self._size[1] // 2),
+            self._size)
         self._is_visible = False
+        self._is_physical = is_physical
 
-    def setOldCoordinates(self, coords: Vec2):
-        self._old_coordinates = coords
+    def getIsPhysical(self) -> bool:
+        return self._is_physical
 
-    def getOldCoordinates(self) -> Vec2:
-        return self._old_coordinates
+    def setIsPhysical(self, is_physical: bool):
+        self._is_physical = is_physical
+
+    def getSize(self) -> Vec2:
+        return self._size
 
     def setCoordinates(self, coords: Vec2):
         self._coordinates = coords
@@ -60,57 +66,31 @@ class Ship:
         self._is_visible = is_visible
 
 
-class Block:
+class Ship(Object):
+    def __init__(self, coordinates: Vec2, size: Vec2, hp: float):
+        super().__init__(coordinates, size, True, hp)
+
+
+class Block(Object):
     def __init__(
             self,
-            block_type: custom_enums.BlockType,
             coords: Vec2,
             size: Vec2,
+            block_type: custom_enums.BlockType,
     ):
+        super().__init__(coords, size)
+
         self._block_type = block_type
-        self._coords = coords
-        self._size = size
-        self._is_physical = True
-        self._closest_water_coords = None
 
-    def setClosestWaterCoordinates(self, coords: Vec2):
-        self._closest_water_coords = coords
-
-    def getClosestWaterCoordinates(self) -> Vec2:
-        return self._closest_water_coords
-
-    def setIsPhysical(self, is_physical: bool):
-        self._is_physical = is_physical
-
-    def getIsPhysical(self) -> bool:
-        return self._is_physical
-
-    def getCoordinates(self) -> Vec2:
-        return self._coords
-
-    def getSize(self) -> Vec2:
-        return self._size
+    def setBlockType(self, new_type: BlockType):
+        self._block_type = new_type
 
     def getBlockType(self) -> BlockType:
         return self._block_type
 
-    def calculateRect(self, relative_to_screen_coords: Vec2):
-        self._rect = pg.rect.Rect(
-            (
-                relative_to_screen_coords[0] + self._size[0] // 2,
-                relative_to_screen_coords[1] + self._size[1] // 2
-            ),
-            self._size
-        )
-
-    def getRect(self) -> pg.rect:
-        return self._rect
-
-    def __hash__(self):
-        return id(self)
-
     def __str__(self) -> str:
         return f"{self._coords}, {self._block_type}"
+
 
 class Model:
     def __init__(self):
@@ -146,14 +126,8 @@ class Model:
         for i in range(len(block_map)):
             for j in range(len(block_map[i])):
                 if i == 0 or i == len(block_map) - 1 or j == 0 or j == len(block_map) - 1:
-                    if i == 0:
-                        block_map[i][j].setClosestWaterCoordinates([i + 1, j])
-                    elif i == len(block_map) - 1:
-                        block_map[i][j].setClosestWaterCoordinates([i - 1, j])
-                    elif j == 0:
-                        block_map[i][j].setClosestWaterCoordinates([i, j + 1])
-                    elif j == len(block_map) - 1:
-                        block_map[i][j].setClosestWaterCoordinates([i, j - 1])
+                    continue
+                    block_map[i][j].setBlockType(BlockType.island)
                     block_map[i][j].setIsPhysical(True)
                     continue
 
@@ -178,9 +152,10 @@ class Model:
             for j in range(-len(perlin_map[i]) // 2, len(perlin_map[i]) // 2):
                 block_type = BlockType.island if perlin_map[i, j] >= GROUND_LEVEL else BlockType.water
                 block_size = DEFAULT_BLOCK_SIZE
-                block = Block(block_type,
-                              (i * block_size[0], j * block_size[1]),
-                              block_size)
+                block = Block(
+                    (i * block_size[0], j * block_size[1]),
+                    block_size,
+                    block_type)
                 block_map[-1].append(block)
 
         self.__applyCollisions(block_map)
@@ -207,13 +182,14 @@ class Model:
         return Model()
 
     def initPlayer(self):
-        self._player = Ship(SHIP_SIZE,
+        self._player = Ship(
                              # [SHIP_SIZE[0] // 2,
                              #   + SHIP_SIZE[1] // 2],
                             [
                                 0,
                                 0
                             ],
+            SHIP_SIZE,
                              PLAYER_BASE_HP)
 
 

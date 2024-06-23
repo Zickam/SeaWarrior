@@ -12,6 +12,7 @@ from model.constants import MAP_SIZE
 from view.constants import *
 from model.constants import PLAYER_SPEED, VISIBLE_SCREEN_MARGIN, COLLISION_DETECTION_RADIUS, ENEMY_SPAWN_INTERVAL
 from model.constants import *
+from model.models import Ship
 
 class ConfigManager:
     CONFIG_DIR = "data/config"
@@ -90,7 +91,7 @@ class Presenter:
         player_rect = self.__model.getPlayer().getRect()
 
         for block_coords, block in self.getVisibleBlockMap().items():
-            if block.getBlockType() == BlockType.island and block.getIsPhysical():
+            if block.getIsPhysical():
                 distance = ((block_coords[0] - player_coords[0]) ** 2 + (block_coords[1] - player_coords[1]) ** 2) ** 0.5
 
                 if distance <= COLLISION_DETECTION_RADIUS:
@@ -101,7 +102,6 @@ class Presenter:
                         self.__model.getPlayer().changeCoordinatesBy((player_anti_acceleration_vec[2], 0))
                         self.__model.getPlayer().changeCoordinatesBy((player_anti_acceleration_vec[3], 0))
 
-                        # print(f"colission")
 
     def startGameplay(self):
         self.__model.setGameState(GameState.gameplay)
@@ -165,8 +165,9 @@ class Presenter:
             enemy_pos_y = random.randint(-MAP_SIZE[1] * DEFAULT_BLOCK_SIZE[1] // 2,
                                          MAP_SIZE[1] * DEFAULT_BLOCK_SIZE[1] // 2)
             enemy = model.models.Ship(
-                SHIP_SIZE,
                 [enemy_pos_x, enemy_pos_y],
+
+                SHIP_SIZE,
                 BOT_BASE_HP
             )
             print(enemy_pos_x, enemy_pos_y)
