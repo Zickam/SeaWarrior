@@ -16,8 +16,8 @@ class Ship:
         self._old_coordinates = self._coordinates
         self._hp = hp
 
-        self._rect = pg.rect.Rect((SCREEN_RESOLUTION[0] // 2 - size[0] // 2, SCREEN_RESOLUTION[1] // 2 - self._size[1] // 2), self._size)
-
+        self._rect = pg.rect.Rect((SCREEN_RESOLUTION[0] // 2 - self._size[0] // 2, SCREEN_RESOLUTION[1] // 2 - self._size[1] // 2), self._size)
+        self._is_visible = False
 
     def setOldCoordinates(self, coords: Vec2):
         self._old_coordinates = coords
@@ -30,6 +30,11 @@ class Ship:
 
     def getCoordinates(self) -> Vec2:
         return self._coordinates
+
+    def calculateRect(self, screen_coords: Vec2):
+        self._rect = pg.rect.Rect((screen_coords[0] // 2 + self._size[0] // 2,
+                                   screen_coords[1] // 2 + self._size[1] // 2),
+                                  self._size)
 
     def getRect(self) -> pg.Rect:
         return self._rect
@@ -47,6 +52,12 @@ class Ship:
 
     def __hash__(self):
         return id(self)
+
+    def getIsVisible(self) -> bool:
+        return self._is_visible
+
+    def setIsVisible(self, is_visible: bool):
+        self._is_visible = is_visible
 
 
 class Block:

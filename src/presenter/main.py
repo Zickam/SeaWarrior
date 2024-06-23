@@ -122,12 +122,36 @@ class Presenter:
     def openMainMenu(self):
         self.__model.setGameState(GameState.main_menu)
 
+    def _calculateEnemiesRect(self):
+        player_coords = tuple(self.__model.getPlayer().getCoordinates())
+
+        visible_block_map_top_left_coordinates = player_coords[0] - SCREEN_RESOLUTION[0] // 2, player_coords[1] - \
+                                                 SCREEN_RESOLUTION[1] // 2
+        visible_block_map_bottom_right_coordinates = player_coords[0] + SCREEN_RESOLUTION[0] // 2, player_coords[1] + \
+                                                     SCREEN_RESOLUTION[1] // 2
+
+        for enemy in self.__model.getEnemies():
+            enemy_coords = enemy.getCoordinates()
+            if visible_block_map_top_left_coordinates[0] <= enemy_coords[0] <= visible_block_map_bottom_right_coordinates[0] and \
+                visible_block_map_top_left_coordinates[1] <= enemy_coords[1] <= visible_block_map_bottom_right_coordinates[1]:
+                enemy_relative_to_player_coords = enemy.getCoordinates()[0] - player_coords[0], enemy.getCoordinates()[1] - player_coords[1]
+                print(enemy_relative_to_player_coords)
+                enemy_relative_to_screen_coords = enemy_relative_to_player_coords[0] + SCREEN_RESOLUTION[0] // 2, enemy_relative_to_player_coords[1] + SCREEN_RESOLUTION[1] // 2
+                enemy.calculateRect(enemy_relative_to_screen_coords)
+                enemy.setIsVisible(True)
+            else:
+                enemy.setIsVisible(False)
+
+    def _handleEnemiesMoving(self):
+        ...
+        for enemy in self.__model.getEnemies():
+            enemy.changeCoordinatesBy((0.01, 0))
+
     def __handleEnemies(self):
         if self.__model.getLastTimeEnemySpawned() + ENEMY_SPAWN_INTERVAL <= time.monotonic():
             enemy_pos_x = random.randint(-MAP_SIZE[0] * DEFAULT_BLOCK_SIZE[0] // 2, MAP_SIZE[0] * DEFAULT_BLOCK_SIZE[0] // 2)
             enemy_pos_y = random.randint(-MAP_SIZE[1] * DEFAULT_BLOCK_SIZE[1] // 2,
                                          MAP_SIZE[1] * DEFAULT_BLOCK_SIZE[1] // 2)
-            print(enemy_pos_x, enemy_pos_y)
             enemy = model.models.Ship(
                 SHIP_SIZE,
                 [enemy_pos_x, enemy_pos_y],
@@ -135,6 +159,10 @@ class Presenter:
             )
             self.__model.addEnemy(enemy)
             self.__model.setLastTimeEnemySpawned(time.monotonic())
+
+        self._handleEnemiesMoving()
+
+        self._calculateEnemiesRect()
 
 
     def tickGameplay(self):
