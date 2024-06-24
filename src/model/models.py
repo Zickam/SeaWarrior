@@ -1,14 +1,10 @@
 from __future__ import annotations
 
-import numpy as np
-import pygame as pg
-
-from view.constants import SCREEN_RESOLUTION
-from custom_types import *
-from perlin_noise import perlin
 from custom_enums import *
-from model.constants import *
+from custom_types import *
+from view.constants import SCREEN_RESOLUTION
 
+import pygame as pg
 
 class Object:
     def __init__(self,  coordinates: Vec2, size: Vec2, is_physical: bool = False, hp: float = None):

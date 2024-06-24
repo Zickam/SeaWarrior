@@ -1,6 +1,8 @@
 import numpy as np
 
 from custom_types import Vec2
+
+
 class Perlin2D:
     PERMUTATION_TABLE_SIZE = 256
 

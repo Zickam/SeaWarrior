@@ -1,8 +1,4 @@
 from dataclasses import dataclass
-from collections import namedtuple
-import custom_enums
-
-import pygame as pg
 
 Vec2 = tuple[int | float, int | float]
 

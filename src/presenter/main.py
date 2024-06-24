@@ -1,19 +1,17 @@
 import random
 import time
 
-import pygame as pg
 import numpy as np
+import pygame as pg
 
 import model.models
 from custom_enums import *
-from model.models import Model, Block
-from custom_types import Vec2
-from model.constants import MAP_SIZE
-from view.constants import *
-from model.constants import PLAYER_SPEED, VISIBLE_SCREEN_MARGIN, COLLISION_DETECTION_RADIUS, ENEMY_SPAWN_INTERVAL
 from model.constants import *
+from model.models import Model, Block
 from model.models import Ship
 from perlin_noise import perlin
+from view.constants import *
+
 
 class ConfigManager:
     CONFIG_DIR = "data/config"
@@ -24,7 +22,9 @@ class ConfigManager:
 class Presenter:
     def __init__(self, model: Model):
         self.__model = model
-        # self._visible_block_map = self.__updateVisibleBlockMap()
+
+    def getPlayer(self):
+        return self.__model.getPlayer()
 
     def getEnemies(self):
         return self.__model.getEnemies()
@@ -34,8 +34,40 @@ class Presenter:
         #     self.__updateVisibleBlockMap()
         return self._visible_block_map
 
+    def startGameplay(self):
+        self.__model.setGameState(GameState.gameplay)
+
+        self.__initBlockMap()
+        self.__initPlayer()
+
+    def togglePause(self):
+        if self.__model.getGameState() == GameState.pause:
+            self.__model.setGameState(GameState.gameplay)
+        else:
+            self.__model.setGameState(GameState.pause)
+
+    def openSavesMenu(self):
+        self.__model.setGameState(GameState.saves_menu)
+
+    def openMainMenu(self):
+        self.__model.setGameState(GameState.main_menu)
+
+    def tickGameplay(self):
+        if hasattr(self.__model, "_player"):
+            self.__updateVisibleBlockMap()
+            self.__handlePlayerControl()
+
+            self.__handleCollisions()
+
+        self.__handleEnemies()
+
+    def handleEvents(self):
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                exit()
+
     def __updateVisibleObjects(self):
-        ...
+        raise NotImplementedError
 
     def __updateVisibleBlockMap(self):
         player_coords = tuple(self.__model.getPlayer().getCoordinates())
@@ -58,10 +90,7 @@ class Presenter:
 
         self._visible_block_map = visible_block_map
 
-    def getPlayer(self):
-        return self.__model.getPlayer()
-
-    def __handlePlayerControl(self) -> list[float]:
+    def __handlePlayerControl(self):
         keys = pg.key.get_pressed()
 
         player_acceleration_vec = [0, 0] # up, down, left, right
@@ -81,16 +110,8 @@ class Presenter:
             player_acceleration_vec[1] += PLAYER_SPEED
 
         player.setAcceleration(player_acceleration_vec)
-        return player_acceleration_vec
 
-
-
-    def handleEvents(self):
-        for event in pg.event.get():
-            if event.type == pg.QUIT:
-                exit()
-
-    def __handleCollisions(self, player_acceleration_vec: list[float]):
+    def __handleCollisions(self):
         entities = {self.__model.getPlayer()}
         for enemy in self.__model.getEnemies():
             entities.add(enemy)
@@ -149,7 +170,6 @@ class Presenter:
         block_map = self.__perlinToBlockMap(_noise)
         self.__model.setBlockMap(block_map)
 
-
     @staticmethod
     def __perlinToBlockMap(perlin_map: np.array) -> set[Block]:
         block_map: list[list[Block]] = []
@@ -176,35 +196,11 @@ class Presenter:
 
     def __initPlayer(self):
         player = Ship(
-            # [SHIP_SIZE[0] // 2,
-            #   + SHIP_SIZE[1] // 2],
-            [
-                0,
-                0
-            ],
+            [0, 0],
             SHIP_SIZE,
             PLAYER_BASE_HP)
         self.__model.setPlayer(player)
 
-    def startGameplay(self):
-        self.__model.setGameState(GameState.gameplay)
-
-        self.__initBlockMap()
-        self.__initPlayer()
-        print("inited")
-
-    def togglePause(self):
-        if self.__model.getGameState() == GameState.pause:
-            self.__model.setGameState(GameState.gameplay)
-        else:
-            self.__model.setGameState(GameState.pause)
-
-
-    def openSavesMenu(self):
-        self.__model.setGameState(GameState.saves_menu)
-
-    def openMainMenu(self):
-        self.__model.setGameState(GameState.main_menu)
 
     def _calculateEnemiesRect(self):
         player_coords = tuple(self.__model.getPlayer().getCoordinates())
@@ -251,7 +247,6 @@ class Presenter:
                                          MAP_SIZE[1] * DEFAULT_BLOCK_SIZE[1] // 2)
             enemy = model.models.Ship(
                 [enemy_pos_x, enemy_pos_y],
-
                 SHIP_SIZE,
                 BOT_BASE_HP
             )
@@ -261,15 +256,3 @@ class Presenter:
         self._handleEnemiesMoving()
 
         self._calculateEnemiesRect()
-
-    def tickGameplay(self):
-        if hasattr(self.__model, "_player"):
-            self.__updateVisibleBlockMap()
-            player_acceleration_vec = self.__handlePlayerControl()
-
-            self.__handleCollisions(player_acceleration_vec)
-
-        self.__handleEnemies()
-
-
-

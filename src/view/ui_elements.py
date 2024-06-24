@@ -1,10 +1,11 @@
 import time
 from typing import Callable
 
+import pygame as pg
+
 from custom_types import *
 from view.constants import *
 
-import pygame as pg
 pg.font.init()
 
 

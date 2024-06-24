@@ -1,17 +1,14 @@
-import time
-
-import view.ui_arrangement
-from custom_types import *
-from presenter.main import Presenter
-from model.models import Model, Block
-from custom_enums import GameState
-from view.constants import *
-from custom_enums import BlockType
-
 import pygame as pg
 
-pg.init()
+import view.ui_arrangement
+from custom_enums import BlockType
+from custom_enums import GameState
+from custom_types import *
+from model.models import Model
+from presenter.main import Presenter
+from view.constants import *
 
+pg.init()
 
 class View:
     def __init__(self, screen: pg.display, presenter: Presenter, buttons: view.ui_arrangement):
@@ -23,14 +20,12 @@ class View:
         for btn in self._buttons:
             btn.value.update(self._screen, mouse_state)
 
-
-
 class MainMenuView(View):
     def __init__(self, screen: pg.display, presenter: Presenter):
         super().__init__(screen, presenter, view.ui_arrangement.MainMenu)
 
         self._buttons.start_btn.value.setActionOnClick(self._presenter.startGameplay)
-        self._buttons.saves_btn.value.setActionOnClick(self._presenter.openSavesMenu)
+        # self._buttons.saves_btn.value.setActionOnClick(self._presenter.openSavesMenu)
         self._buttons.exit_btn.value.setActionOnClick(exit)
 
     def update(self, mouse_state: MouseState):
@@ -114,7 +109,7 @@ class GeneralView:
 
         self.__main_menu_view = MainMenuView(self.__screen, presenter)
         self.__gameplay_view = GameplayView(self.__screen, presenter)
-        self.__saves_menu_view = SavesMenuView(self.__screen, presenter)
+        # self.__saves_menu_view = SavesMenuView(self.__screen, presenter)
         self.__pause_menu_view = PauseMenuView(self.__screen, presenter)
 
     def showFPS(self):
