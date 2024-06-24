@@ -32,7 +32,7 @@ class Perlin2D:
         return t * t * t * (t * (t * 6 - 15) + 10)
 
     @staticmethod
-    def __lerp(t: float, a: int, b: int):
+    def __interpolate(t: float, a: int, b: int):
         return a + t * (b - a)
 
     @staticmethod
@@ -65,10 +65,10 @@ class Perlin2D:
             self.__permutation_table[self.__permutation_table[xi + 1] + yi + 1],
             (xf - 1, yf - 1))
 
-        x1 = self.__lerp(u, n00, n10)
-        x2 = self.__lerp(u, n01, n11)
+        x1 = self.__interpolate(u, n00, n10)
+        x2 = self.__interpolate(u, n01, n11)
 
-        return self.__lerp(v, x1, x2)
+        return self.__interpolate(v, x1, x2)
 
     @staticmethod
     def __getMaxAndMinValues(noise: list[list[float]]) -> tuple[float, float]:
@@ -118,6 +118,6 @@ if __name__ == "__main__":
     noise = perlin.generatePerlin((width, height), scale, octaves)
     print(noise)
 
-    plt.imshow(noise,)
+    plt.imshow(noise, cmap="gray")
     # plt.colorbar()
     plt.show()
