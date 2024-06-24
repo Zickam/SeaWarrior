@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import custom_enums
 from custom_enums import *
 from custom_types import *
 from view.constants import SCREEN_RESOLUTION
