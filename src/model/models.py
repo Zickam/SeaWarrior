@@ -133,7 +133,4 @@ class Model:
     def setGameState(self, game_state: custom_enums.GameState):
         self.__state = game_state
 
-    @staticmethod
-    def restartGame() -> Model:
-        return Model()
 
